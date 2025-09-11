@@ -114,7 +114,7 @@ export function PlayersPage() {
   const handlePlayerUpdated = (updatedPlayer: DocumentData) => {
     setPlayers((prevPlayers) =>
       prevPlayers.map((p) =>
-        p.id === updatedPlayer.id ? (updatedPlayer as Player) : p
+        p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } as Player : p
       )
     );
   };
