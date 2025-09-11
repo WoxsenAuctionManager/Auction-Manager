@@ -72,11 +72,13 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
       
       await uploadBytes(storageRef, photoFile);
       const photo_url = await getDownloadURL(storageRef);
-      
-      const { photo, ...playerData } = data;
 
       const docData = {
-        ...playerData,
+        name: data.name,
+        contact: data.contact,
+        year: data.year,
+        department: data.department,
+        player_position: data.player_position,
         photo_url,
       };
 
