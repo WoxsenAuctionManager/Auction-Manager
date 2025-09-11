@@ -210,14 +210,9 @@ export function AuctionPage() {
         teamId: lastAction.previousState.teamId || null,
         price: lastAction.previousState.price || null,
       });
-
-      if (lastAction.previousState.teamId === null) { 
-        setCurrentPlayerIndex(prev => prev > 0 ? prev - 1 : 0);
-      } else {
-        setPlayers(prev => [playerToRestore, ...prev]);
-        setAllUnsoldPlayers(prev => [playerToRestore, ...prev]);
-        setCurrentPlayerIndex(0);
-      }
+      
+      // Full refresh to ensure consistency
+      await fetchData();
 
       toast({
         title: "Action Undone",
@@ -272,7 +267,7 @@ export function AuctionPage() {
 
 
   const currentPlayer = players[currentPlayerIndex];
-  const upcomingPlayers = allUnsoldPlayers.filter(p => p.id !== currentPlayer?.id);
+  const upcomingPlayers = players.slice(currentPlayerIndex + 1);
 
   if (loading) {
     return (
