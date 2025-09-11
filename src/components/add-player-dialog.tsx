@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc, DocumentData } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ const playerSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
-  photo_url: z.string().url({ message: "Please enter a valid URL." }),
+  photo: z.any().refine(files => typeof window === 'undefined' || (files instanceof FileList && files.length > 0), 'Player photo is required.'),
 });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -57,15 +58,26 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
       year: "",
       department: "",
       player_position: "",
-      photo_url: "",
     },
   });
+
+  const photoRef = form.register("photo");
 
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
-      const docRef = await addDoc(collection(db, "players"), data);
-      onPlayerAdded({ id: docRef.id, data: () => data });
+      const storage = getStorage();
+      const photoFile = data.photo[0];
+      const storageRef = ref(storage, `player_photos/${Date.now()}_${photoFile.name}`);
+      
+      await uploadBytes(storageRef, photoFile);
+      const photo_url = await getDownloadURL(storageRef);
+
+      const playerData = { ...data, photo_url, photo: undefined };
+      delete playerData.photo;
+
+      const docRef = await addDoc(collection(db, "players"), playerData);
+      onPlayerAdded({ id: docRef.id, data: () => playerData });
       toast({
         title: "Player Added",
         description: `${data.name} has been successfully added.`,
@@ -110,12 +122,12 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
             />
              <FormField
               control={form.control}
-              name="photo_url"
+              name="photo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player Photo URL</FormLabel>
+                  <FormLabel>Player Photo</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input type="file" {...photoRef} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
