@@ -6,9 +6,7 @@ import { db } from "@/lib/firebase";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -90,8 +88,8 @@ export function SoldPlayersPage() {
   }, [soldPlayers, searchTerm]);
 
   return (
-    <>
-      <div className="flex-1">
+    <div className="flex flex-col gap-4">
+      <div>
         <h1 className="font-semibold text-3xl">Sold Players</h1>
         <p className="text-muted-foreground mt-1">
           A list of all players who have been sold in the auction.
@@ -183,6 +181,6 @@ export function SoldPlayersPage() {
           </Table>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }
