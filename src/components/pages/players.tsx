@@ -46,7 +46,6 @@ interface Player {
   year: string;
   department: string;
   player_position: string;
-  photo_url?: string;
 }
 
 export function PlayersPage() {
@@ -137,7 +136,6 @@ export function PlayersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">Sno.</TableHead>
-                <TableHead>Player Photo</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Year</TableHead>
@@ -151,7 +149,7 @@ export function PlayersPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
+                  <TableCell colSpan={7} className="text-center">
                     Loading...
                   </TableCell>
                 </TableRow>
@@ -159,14 +157,6 @@ export function PlayersPage() {
                 filteredPlayers.map((player, index) => (
                   <TableRow key={player.id}>
                     <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Avatar>
-                        <AvatarImage src={player.photo_url} alt={player.name} />
-                        <AvatarFallback>
-                          {player.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
                     <TableCell className="font-medium">{player.name}</TableCell>
                     <TableCell>{player.contact}</TableCell>
                     <TableCell>{player.year}</TableCell>
@@ -190,7 +180,7 @@ export function PlayersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
+                  <TableCell colSpan={7} className="text-center">
                     No players found.
                   </TableCell>
                 </TableRow>

@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc, DocumentData } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,6 @@ const playerSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
-  photo: z.any().optional(),
 });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -63,29 +61,15 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
     },
   });
 
-  const photoRef = form.register("photo");
-
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
-      let photo_url = "";
-      const photoFile = data.photo?.[0];
-
-      if (photoFile instanceof File) {
-        const storage = getStorage();
-        const storageRef = ref(storage, `player_photos/${Date.now()}_${photoFile.name}`);
-        
-        await uploadBytes(storageRef, photoFile);
-        photo_url = await getDownloadURL(storageRef);
-      }
-      
       const docData = {
         name: data.name,
         contact: data.contact,
         year: data.year,
         department: data.department,
         player_position: data.player_position,
-        photo_url,
       };
 
       const docRef = await addDoc(collection(db, "players"), docData);
@@ -129,19 +113,6 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="photo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Player Photo</FormLabel>
-                  <FormControl>
-                    <Input type="file" {...photoRef} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
