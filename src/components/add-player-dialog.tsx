@@ -37,7 +37,7 @@ const playerSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
-  photo: z.any(),
+  photo: z.any().optional(),
 });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -69,9 +69,9 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
     setIsSaving(true);
     try {
       let photo_url = "";
-      const photoFile = data.photo && data.photo[0];
+      const photoFile = data.photo?.[0];
 
-      if (photoFile) {
+      if (photoFile instanceof File) {
         const storage = getStorage();
         const storageRef = ref(storage, `player_photos/${Date.now()}_${photoFile.name}`);
         
