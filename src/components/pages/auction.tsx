@@ -294,6 +294,9 @@ export function AuctionPage() {
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   
   const upcomingPlayers = useMemo(() => {
+    if (!auctionStarted) {
+      return players;
+    }
     if (!currentPlayer || players.length <= 1) {
       return [];
     }
@@ -301,7 +304,7 @@ export function AuctionPage() {
       ...players.slice(currentPlayerIndex + 1),
       ...players.slice(0, currentPlayerIndex)
     ];
-  }, [players, currentPlayerIndex, currentPlayer]);
+  }, [players, currentPlayerIndex, currentPlayer, auctionStarted]);
 
 
   if (loading) {
@@ -518,5 +521,7 @@ export function AuctionPage() {
     </>
   );
 }
+
+    
 
     
