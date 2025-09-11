@@ -108,7 +108,12 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        form.reset();
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Player</DialogTitle>
