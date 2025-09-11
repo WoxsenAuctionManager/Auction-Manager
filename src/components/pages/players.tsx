@@ -49,6 +49,7 @@ import {
 } from "../ui/dropdown-menu";
 import { AddPlayerDialog } from "../add-player-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { PlayerProfileDialog } from "../player-profile-dialog";
 
 export interface Player {
   id: string;
@@ -68,6 +69,7 @@ export function PlayersPage() {
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { toast } = useToast();
 
   const fetchPlayers = async () => {
@@ -169,6 +171,12 @@ export function PlayersPage() {
         playerToEdit={playerToEdit}
       />
 
+      <PlayerProfileDialog
+        player={selectedPlayer}
+        open={!!selectedPlayer}
+        onOpenChange={() => setSelectedPlayer(null)}
+      />
+
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -213,7 +221,7 @@ export function PlayersPage() {
                 </TableRow>
               ) : filteredPlayers.length > 0 ? (
                 filteredPlayers.map((player, index) => (
-                  <TableRow key={player.id}>
+                  <TableRow key={player.id} onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
                       <Avatar>
@@ -231,18 +239,18 @@ export function PlayersPage() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
                             <MoreHorizontal className="h-4 w-4" />
                             <span className="sr-only">Toggle menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(player)}>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(player); }}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => setPlayerToDelete(player)}
+                            onClick={(e) => { e.stopPropagation(); setPlayerToDelete(player); }}
                             className="text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
