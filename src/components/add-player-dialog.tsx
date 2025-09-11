@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { ScrollArea } from "./ui/scroll-area";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -114,6 +115,8 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <ScrollArea className="h-[450px] pr-6">
+            <div className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -203,6 +206,8 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                 </pre>
               </CardContent>
             </Card>
+            </div>
+            </ScrollArea>
 
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
