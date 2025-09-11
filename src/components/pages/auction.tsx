@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   collection,
   getDocs,
@@ -68,7 +68,6 @@ interface LastAction {
 
 export function AuctionPage() {
   const [players, setPlayers] = useState<AuctionPlayer[]>([]);
-  const [allUnsoldPlayers, setAllUnsoldPlayers] = useState<AuctionPlayer[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState("");
@@ -92,7 +91,6 @@ export function AuctionPage() {
         ...doc.data(),
       })) as AuctionPlayer[];
       setPlayers(playersList);
-      setAllUnsoldPlayers(playersList);
 
       const teamsSnapshot = await getDocs(collection(db, "teams"));
       const teamsList = teamsSnapshot.docs.map((doc) => ({
@@ -152,7 +150,6 @@ export function AuctionPage() {
 
       const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
       setPlayers(updatedPlayers);
-      setAllUnsoldPlayers(allUnsoldPlayers.filter(p => p.id !== currentPlayer.id));
       
       setSelectedTeam("");
       setPrice("");
@@ -191,7 +188,13 @@ export function AuctionPage() {
       },
     });
 
-    setCurrentPlayerIndex(prev => prev + 1);
+    setCurrentPlayerIndex(prev => {
+        if (prev + 1 >= players.length) {
+            return 0;
+        }
+        return prev + 1;
+    });
+
     toast({
         title: "Player Unsold",
         description: `${currentPlayer.name} is unsold. Moving to the next player.`,
@@ -267,7 +270,19 @@ export function AuctionPage() {
 
 
   const currentPlayer = players[currentPlayerIndex];
-  const upcomingPlayers = players.slice(currentPlayerIndex + 1);
+  
+  const upcomingPlayers = useMemo(() => {
+    if (!currentPlayer || players.length <= 1) {
+      return [];
+    }
+    // Create a new array of players, starting from the one after the current player,
+    // and wrapping around to the beginning, excluding the current player.
+    return [
+      ...players.slice(currentPlayerIndex + 1),
+      ...players.slice(0, currentPlayerIndex)
+    ];
+  }, [players, currentPlayerIndex, currentPlayer]);
+
 
   if (loading) {
     return (
