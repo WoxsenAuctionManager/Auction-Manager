@@ -34,9 +34,15 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertCircle, PlusCircle, Trash2, Pencil, Shield } from "lucide-react";
+import { AlertCircle, PlusCircle, Trash2, Pencil, Shield, MoreHorizontal } from "lucide-react";
 import { AddTeamDialog } from "../add-team-dialog";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export interface Team {
   id: string;
@@ -160,26 +166,47 @@ export function TeamsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {teams.length > 0 ? (
                         teams.map((team) => (
-                            <Card key={team.id}>
-                                <CardHeader className="items-center text-center">
+                            <Card key={team.id} className="relative">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute top-2 right-2 h-6 w-6"
+                                        >
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => handleEdit(team)}>
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() => setTeamToDelete(team)}
+                                            className="text-destructive"
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <CardHeader className="items-center text-center pt-8">
                                     <Avatar className="h-24 w-24 mb-4">
                                         <AvatarImage src={team.logoUrl ? team.logoUrl : undefined} alt={team.name} />
                                         <AvatarFallback><Shield /></AvatarFallback>
                                     </Avatar>
                                     <CardTitle>{team.name}</CardTitle>
                                 </CardHeader>
-                                <CardFooter className="flex justify-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => handleEdit(team)}>
-                                        <Pencil className="mr-2 h-4 w-4" /> Edit
-                                    </Button>
-                                    <Button variant="destructive" size="sm" onClick={() => setTeamToDelete(team)}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                    </Button>
-                                </CardFooter>
                             </Card>
                         ))
                     ) : (
-                        <p>No teams found. Add a new team to get started.</p>
+                        <Card>
+                          <CardContent className="flex flex-col items-center justify-center p-12">
+                                <p>No teams found. Add a new team to get started.</p>
+                          </CardContent>
+                        </Card>
                     )}
                 </div>
             )}
