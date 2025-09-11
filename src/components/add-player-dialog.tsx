@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -72,7 +73,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
       
       await uploadBytes(storageRef, photoFile);
       const photo_url = await getDownloadURL(storageRef);
-
+      
       const docData = {
         name: data.name,
         contact: data.contact,
@@ -191,6 +192,18 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                 </FormItem>
               )}
             />
+
+            <Card className="mt-4">
+              <CardHeader className="p-4">
+                <CardTitle className="text-lg">Debugger</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <pre className="text-xs overflow-auto">
+                  {JSON.stringify(form.watch(), null, 2)}
+                </pre>
+              </CardContent>
+            </Card>
+
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSaving}>
