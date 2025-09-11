@@ -37,7 +37,7 @@ const playerSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
-  photo: z.any().refine(files => typeof window === 'undefined' || (files instanceof FileList && files.length > 0), 'Player photo is required.'),
+  photo: z.any(),
 });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -68,12 +68,16 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
-      const storage = getStorage();
-      const photoFile = data.photo[0];
-      const storageRef = ref(storage, `player_photos/${Date.now()}_${photoFile.name}`);
-      
-      await uploadBytes(storageRef, photoFile);
-      const photo_url = await getDownloadURL(storageRef);
+      let photo_url = "";
+      const photoFile = data.photo && data.photo[0];
+
+      if (photoFile) {
+        const storage = getStorage();
+        const storageRef = ref(storage, `player_photos/${Date.now()}_${photoFile.name}`);
+        
+        await uploadBytes(storageRef, photoFile);
+        photo_url = await getDownloadURL(storageRef);
+      }
       
       const docData = {
         name: data.name,
