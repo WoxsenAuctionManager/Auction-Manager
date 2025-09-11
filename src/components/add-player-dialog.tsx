@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { convertGoogleDriveUrl } from "@/lib/utils";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -96,7 +97,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
     try {
       const docData = {
         ...data,
-        photoUrl: data.photoUrl || "",
+        photoUrl: data.photoUrl ? convertGoogleDriveUrl(data.photoUrl) : "",
       };
 
       if (isEditMode && playerToEdit) {

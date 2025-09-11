@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import * as XLSX from "xlsx";
+import { convertGoogleDriveUrl } from "@/lib/utils";
 
 import {
   AlertDialog,
@@ -166,7 +167,7 @@ export function PlayersPage() {
           department: row.Department || '',
           year: String(row.Year || ''),
           player_position: row.Position || '',
-          photoUrl: row['Photo URL'] || '',
+          photoUrl: row['Photo URL'] ? convertGoogleDriveUrl(row['Photo URL']) : '',
         }));
 
         setImportedPlayers(newPlayers);
