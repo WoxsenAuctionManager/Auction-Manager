@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
   Card,
@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2, Search, MoreHorizontal, Trash2 } from "lucide-react";
+import { User, Loader2, Search, MoreHorizontal, Trash2, Trash } from "lucide-react";
 import type { Player } from "./players";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -47,10 +47,11 @@ export function UnsoldPlayersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
+  const [isRemoveAllDialogOpen, setIsRemoveAllDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchUnsoldPlayers = async () => {
+  const fetchUnsoldPlayers = async () => {
       setLoading(true);
       setError(null);
       try {
@@ -72,11 +73,13 @@ export function UnsoldPlayersPage() {
       }
     };
 
+  useEffect(() => {
     fetchUnsoldPlayers();
   }, []);
   
   const handleRemove = async () => {
     if (!playerToRemove) return;
+    setIsProcessing(true);
     try {
       const playerDocRef = doc(db, "players", playerToRemove.id);
       await updateDoc(playerDocRef, { status: 'queued' });
@@ -95,6 +98,35 @@ export function UnsoldPlayersPage() {
       });
     } finally {
       setPlayerToRemove(null);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRemoveAll = async () => {
+    setIsProcessing(true);
+    try {
+      const batch = writeBatch(db);
+      unsoldPlayers.forEach(player => {
+        const playerDocRef = doc(db, "players", player.id);
+        batch.update(playerDocRef, { status: 'queued' });
+      });
+      await batch.commit();
+
+      setUnsoldPlayers([]);
+      toast({
+        title: "All Players Removed",
+        description: "All unsold players have been moved back to the available players list.",
+      });
+    } catch (error) {
+      console.error("Error removing all players:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove all players. Please try again.",
+      });
+    } finally {
+      setIsRemoveAllDialogOpen(false);
+      setIsProcessing(false);
     }
   };
 
@@ -106,12 +138,22 @@ export function UnsoldPlayersPage() {
 
   return (
     <>
-      <CardHeader className="px-0">
-        <CardTitle>Unsold Players</CardTitle>
-        <CardDescription>
-          A list of all players who were not sold in the auction.
-        </CardDescription>
-      </CardHeader>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-semibold text-3xl">Unsold Players</h1>
+          <p className="text-muted-foreground mt-1">
+            A list of all players who were not sold in the auction.
+          </p>
+        </div>
+        <Button 
+          variant="destructive" 
+          onClick={() => setIsRemoveAllDialogOpen(true)}
+          disabled={unsoldPlayers.length === 0 || isProcessing}
+        >
+          <Trash className="mr-2 h-4 w-4" />
+          Remove All Players
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>
@@ -178,7 +220,7 @@ export function UnsoldPlayersPage() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isProcessing}>
                             <MoreHorizontal className="h-4 w-4" />
                             <span className="sr-only">Toggle menu</span>
                           </Button>
@@ -218,7 +260,28 @@ export function UnsoldPlayersPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemove}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={handleRemove} disabled={isProcessing}>
+              {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isRemoveAllDialogOpen} onOpenChange={setIsRemoveAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to remove all players?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will move all players from the unsold list back to the available players pool.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveAll} disabled={isProcessing}>
+              {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Remove All
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
