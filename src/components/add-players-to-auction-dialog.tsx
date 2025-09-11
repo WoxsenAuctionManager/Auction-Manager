@@ -27,10 +27,10 @@ interface AddPlayersToAuctionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPlayersAdded: (newPlayers: Player[]) => void;
-  existingPlayers: Player[];
+  playersInQueue: Player[];
 }
 
-export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, existingPlayers }: AddPlayersToAuctionDialogProps) {
+export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, playersInQueue }: AddPlayersToAuctionDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,8 +53,8 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
             ...doc.data(),
           })) as Player[];
 
-          const existingPlayerIds = new Set(existingPlayers.map(p => p.id));
-          const availablePlayers = playersList.filter(p => !existingPlayerIds.has(p.id));
+          const playersInQueueIds = new Set(playersInQueue.map(p => p.id));
+          const availablePlayers = playersList.filter(p => !playersInQueueIds.has(p.id));
           
           setAllPlayers(availablePlayers);
           setSelectedPlayers([]);
@@ -72,7 +72,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
 
       fetchPlayers();
     }
-  }, [open, toast, existingPlayers]);
+  }, [open, toast, playersInQueue]);
 
   const filteredPlayers = useMemo(() => {
     return allPlayers.filter((player) =>

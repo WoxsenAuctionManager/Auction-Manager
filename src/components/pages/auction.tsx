@@ -70,7 +70,6 @@ interface ActionRecord {
 
 
 export function AuctionPage() {
-  const [allPlayers, setAllPlayers] = useState<AuctionPlayer[]>([]);
   const [players, setPlayers] = useState<AuctionPlayer[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -90,12 +89,11 @@ export function AuctionPage() {
     try {
       const playersQuery = query(collection(db, "players"), where("status", "==", "queued"));
       const playersSnapshot = await getDocs(playersQuery);
-      const allPlayersList = playersSnapshot.docs.map((doc) => ({
+      const playersList = playersSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as AuctionPlayer[];
-      setAllPlayers(allPlayersList);
-      setPlayers(allPlayersList);
+      setPlayers(playersList);
 
       const teamsSnapshot = await getDocs(collection(db, "teams"));
       const teamsList = teamsSnapshot.docs.map((doc) => ({
@@ -125,14 +123,9 @@ export function AuctionPage() {
   }, [fetchData]);
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
+    const playersWithStatus = newPlayers.map(p => ({ ...p, status: 'queued' as const }));
     setPlayers(prevPlayers => {
-        const combined = [...prevPlayers, ...newPlayers];
-        // Simple deduplication based on ID
-        const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p])).values());
-        return uniquePlayers;
-    });
-    setAllPlayers(prevAll => {
-        const combined = [...prevAll, ...newPlayers];
+        const combined = [...prevPlayers, ...playersWithStatus];
         const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p])).values());
         return uniquePlayers;
     });
@@ -174,7 +167,6 @@ export function AuctionPage() {
       
       const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
       setPlayers(updatedPlayers);
-      setAllPlayers(prevAll => prevAll.map(p => p.id === currentPlayer.id ? { ...p, ...soldData } : p));
       
       setSelectedTeam("");
       setPrice("");
@@ -223,7 +215,6 @@ export function AuctionPage() {
 
         const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
         setPlayers(updatedPlayers);
-        setAllPlayers(prevAll => prevAll.map(p => p.id === currentPlayer.id ? { ...p, status: 'unsold' } : p));
         
         if (currentPlayerIndex >= updatedPlayers.length) {
             setCurrentPlayerIndex(0);
@@ -270,20 +261,6 @@ export function AuctionPage() {
       setPlayers(lastAction.previousPlayers);
       setCurrentPlayerIndex(lastAction.previousCurrentPlayerIndex);
       
-      // Revert allPlayers state
-      const revertedAllPlayers = allPlayers.map(p => {
-          if (p.id === lastAction.player.id) {
-              return lastAction.previousPlayerState;
-          }
-          return p;
-      });
-      // Add player back if they were removed
-      if (!revertedAllPlayers.find(p => p.id === lastAction.player.id)) {
-        revertedAllPlayers.push(lastAction.previousPlayerState);
-      }
-      setAllPlayers(revertedAllPlayers);
-
-
       setActionHistory(prev => prev.slice(0, -1));
       toast({
         title: "Action Undone",
@@ -305,7 +282,8 @@ export function AuctionPage() {
     setIsProcessing(true);
     try {
         const playersRef = collection(db, "players");
-        const querySnapshot = await getDocs(playersRef);
+        const q = query(playersRef, where("status", "in", ["sold", "unsold"]));
+        const querySnapshot = await getDocs(q);
         
         const batch = writeBatch(db);
         querySnapshot.forEach((playerDoc) => {
@@ -320,7 +298,7 @@ export function AuctionPage() {
             description: "The auction has been reset. All players are now available."
         });
         
-        await fetchData(); // Refetch all data to reset state
+        await fetchData();
     } catch (error) {
         console.error("Error resetting auction:", error);
         toast({
@@ -562,7 +540,7 @@ export function AuctionPage() {
         open={isAddPlayersDialogOpen}
         onOpenChange={setIsAddPlayersDialogOpen}
         onPlayersAdded={handlePlayersAddedToAuction}
-        existingPlayers={allPlayers}
+        playersInQueue={players}
     />
     </>
   );
