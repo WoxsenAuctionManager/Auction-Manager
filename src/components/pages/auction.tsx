@@ -301,7 +301,6 @@ export function AuctionPage() {
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>
                     <CardTitle className="text-center text-3xl">Welcome to the Auction</CardTitle>
-                    <CardDescription className="text-center">Click the button below to begin the auction.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
                     <div className="text-center py-12">
