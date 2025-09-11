@@ -50,6 +50,15 @@ interface AddPlayerDialogProps {
   playerToEdit?: Player | null;
 }
 
+const defaultFormValues = {
+  name: "",
+  contact: "",
+  year: "",
+  department: "",
+  player_position: "",
+  photoUrl: "",
+};
+
 export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpdated, playerToEdit }: AddPlayerDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -57,30 +66,23 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
 
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerSchema),
-    defaultValues: {
-      name: "",
-      contact: "",
-      year: "",
-      department: "",
-      player_position: "",
-      photoUrl: "",
-    },
+    defaultValues: defaultFormValues,
   });
 
   useEffect(() => {
     if (isEditMode && playerToEdit) {
-      form.reset(playerToEdit);
-    } else {
       form.reset({
-        name: "",
-        contact: "",
-        year: "",
-        department: "",
-        player_position: "",
-        photoUrl: "",
+        name: playerToEdit.name || "",
+        contact: playerToEdit.contact || "",
+        year: playerToEdit.year || "",
+        department: playerToEdit.department || "",
+        player_position: playerToEdit.player_position || "",
+        photoUrl: playerToEdit.photoUrl || "",
       });
+    } else {
+      form.reset(defaultFormValues);
     }
-  }, [playerToEdit, isEditMode, form]);
+  }, [playerToEdit, isEditMode, form, open]);
 
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
@@ -122,7 +124,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) {
-        form.reset();
+        form.reset(defaultFormValues);
       }
       onOpenChange(isOpen);
     }}>
