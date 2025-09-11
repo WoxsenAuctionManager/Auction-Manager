@@ -15,10 +15,6 @@ import { Label } from "@/components/ui/label";
 export function AuctionSettingsPage() {
     return (
         <>
-            <div className="flex items-center justify-between">
-                <h1 className="font-semibold text-3xl">Auction Settings</h1>
-            </div>
-
             <Card>
                 <CardHeader>
                     <CardTitle>Auction Configuration</CardTitle>
