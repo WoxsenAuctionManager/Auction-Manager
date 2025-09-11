@@ -96,6 +96,7 @@ export function SoldPlayersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">Sno.</TableHead>
+                <TableHead>Player Photo</TableHead>
                 <TableHead>Player</TableHead>
                 <TableHead>Position</TableHead>
                 <TableHead>Sold To</TableHead>
@@ -105,13 +106,13 @@ export function SoldPlayersPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
+                  <TableCell colSpan={6} className="text-center h-24">
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : error ? (
                  <TableRow>
-                  <TableCell colSpan={5} className="text-center text-destructive">
+                  <TableCell colSpan={6} className="text-center text-destructive">
                     {error}
                   </TableCell>
                 </TableRow>
@@ -119,19 +120,19 @@ export function SoldPlayersPage() {
                 soldPlayers.map((player, index) => (
                   <TableRow key={player.id}>
                     <TableCell>{index + 1}</TableCell>
+                    <TableCell>
+                      <Avatar>
+                        <AvatarImage
+                          src={player.photoUrl}
+                          alt={player.name}
+                        />
+                        <AvatarFallback>
+                          <User />
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage
-                            src={player.photoUrl}
-                            alt={player.name}
-                          />
-                          <AvatarFallback>
-                            <User />
-                          </AvatarFallback>
-                        </Avatar>
-                        {player.name}
-                      </div>
+                      {player.name}
                     </TableCell>
                     <TableCell>{player.player_position}</TableCell>
                     <TableCell>
@@ -153,7 +154,7 @@ export function SoldPlayersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={6} className="text-center">
                     No sold players found.
                   </TableCell>
                 </TableRow>
