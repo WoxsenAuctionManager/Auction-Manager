@@ -19,7 +19,7 @@ import { useState } from "react";
 const navLinks = [
   { href: "/", label: "Player's List", icon: Users },
   { href: "/teams", label: "Teams", icon: Shield },
-  { href: "/auction-settings", label: "Auction Settings", icon: Settings },
+  { href: "/auction-settings", label: "Auction", icon: Settings },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
