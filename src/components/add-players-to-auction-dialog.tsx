@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { collection, getDocs, query } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, User } from "lucide-react";
+import { Loader2, Search, User, Filter } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import type { Player } from "./pages/players";
 import { Checkbox } from "./ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Label } from "./ui/label";
-
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select";
+  
 interface AddPlayersToAuctionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,6 +43,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
   const [loading, setLoading] = useState(true);
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [positionFilter, setPositionFilter] = useState("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -51,7 +59,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
           })) as Player[];
 
           const playersInQueueIds = new Set(playersInQueue.map(p => p.id));
-          const availablePlayers = playersList.filter(p => !playersInQueueIds.has(p.id));
+          const availablePlayers = playersList.filter(p => !playersInQueueIds.has(p.id) && (p as any).status !== 'sold' && (p as any).status !== 'unsold');
           
           setAllPlayers(availablePlayers);
           setSelectedPlayers([]);
@@ -73,9 +81,10 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
 
   const filteredPlayers = useMemo(() => {
     return allPlayers.filter((player) =>
-      player.name.toLowerCase().includes(searchTerm.toLowerCase())
+        player.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (positionFilter === 'all' || player.player_position === positionFilter)
     );
-  }, [allPlayers, searchTerm]);
+  }, [allPlayers, searchTerm, positionFilter]);
 
   const handlePlayerSelect = (player: Player, checked: boolean) => {
     setSelectedPlayers(prev => {
@@ -106,15 +115,30 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-            <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="Search players..."
-                    className="w-full pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="flex gap-2">
+                <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search players..."
+                        className="w-full pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Select onValueChange={setPositionFilter} value={positionFilter}>
+                    <SelectTrigger className="w-[180px]">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Filter by position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Positions</SelectItem>
+                        <SelectItem value="Forward">Forward</SelectItem>
+                        <SelectItem value="Mid Fielder">Mid Fielder</SelectItem>
+                        <SelectItem value="Defender">Defender</SelectItem>
+                        <SelectItem value="Goal Keeper">Goal Keeper</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <ScrollArea className="h-[40vh] border rounded-md p-2">
                 {loading ? (
