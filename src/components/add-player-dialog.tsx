@@ -85,29 +85,25 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
+      const docData = {
+        ...data,
+        photoUrl: data.photoUrl || "",
+      };
+
       if (isEditMode && playerToEdit) {
         const playerDocRef = doc(db, "players", playerToEdit.id);
-        await updateDoc(playerDocRef, data);
-        onPlayerUpdated({ id: playerToEdit.id, ...data });
+        await updateDoc(playerDocRef, docData);
+        onPlayerUpdated({ id: playerToEdit.id, ...docData });
         toast({
           title: "Player Updated",
-          description: `${data.name} has been successfully updated.`,
+          description: `${docData.name} has been successfully updated.`,
         });
       } else {
-        const docData = {
-          name: data.name,
-          contact: data.contact,
-          year: data.year,
-          department: data.department,
-          player_position: data.player_position,
-          photoUrl: data.photoUrl || "",
-        };
-
         const docRef = await addDoc(collection(db, "players"), docData);
         onPlayerAdded({ id: docRef.id, ...docData });
         toast({
           title: "Player Added",
-          description: `${data.name} has been successfully added.`,
+          description: `${docData.name} has been successfully added.`,
         });
       }
       onOpenChange(false);
