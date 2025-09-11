@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -46,6 +47,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string };
 
@@ -258,6 +267,7 @@ export function AuctionPage() {
 
 
   const currentPlayer = players[currentPlayerIndex];
+  const upcomingPlayers = players.slice(currentPlayerIndex + 1);
 
   if (loading) {
     return (
@@ -309,65 +319,102 @@ export function AuctionPage() {
             </CardContent>
         </Card>
       ) : (
-        <Card className="max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col md:flex-row items-center gap-8">
-            <Avatar className="h-48 w-48 border-4 border-primary">
-              <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} />
-              <AvatarFallback className="text-6xl">
-                <User />
-              </AvatarFallback>
-            </Avatar>
-            <div className="w-full space-y-3">
-              <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
-                <p className="font-medium text-muted-foreground">Department</p>
-                <p>{currentPlayer.department}</p>
-                <p className="font-medium text-muted-foreground">Year</p>
-                <p>{currentPlayer.year}</p>
-                <p className="font-medium text-muted-foreground">Position</p>
-                <p>{currentPlayer.player_position}</p>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
-            <div className="grid w-full md:w-auto md:flex-1 gap-2">
-              <Label htmlFor="team">Team</Label>
-              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                <SelectTrigger id="team">
-                  <SelectValue placeholder="Select a team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid w-full md:w-1/4 gap-2">
-              <Label htmlFor="price">Price</Label>
-              <Input
-                id="price"
-                type="number"
-                placeholder="Enter price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </div>
-            <div className="flex w-full md:w-auto self-end gap-2">
-              <Button onClick={handleSold} className="flex-1 md:flex-none" disabled={isProcessing}>
-                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sold
-              </Button>
-              <Button onClick={handleUnsold} variant="outline" className="flex-1 md:flex-none" disabled={isProcessing}>
-                Unsold
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
+        <div className="space-y-8">
+            <Card className="max-w-4xl mx-auto">
+                <CardHeader>
+                    <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col md:flex-row items-center gap-8">
+                    <Avatar className="h-48 w-48 border-4 border-primary">
+                    <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} />
+                    <AvatarFallback className="text-6xl">
+                        <User />
+                    </AvatarFallback>
+                    </Avatar>
+                    <div className="w-full space-y-3">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
+                        <p className="font-medium text-muted-foreground">Department</p>
+                        <p>{currentPlayer.department}</p>
+                        <p className="font-medium text-muted-foreground">Year</p>
+                        <p>{currentPlayer.year}</p>
+                        <p className="font-medium text-muted-foreground">Position</p>
+                        <p>{currentPlayer.player_position}</p>
+                    </div>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
+                    <div className="grid w-full md:w-auto md:flex-1 gap-2">
+                    <Label htmlFor="team">Team</Label>
+                    <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                        <SelectTrigger id="team">
+                        <SelectValue placeholder="Select a team" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {teams.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    </div>
+                    <div className="grid w-full md:w-1/4 gap-2">
+                    <Label htmlFor="price">Price</Label>
+                    <Input
+                        id="price"
+                        type="number"
+                        placeholder="Enter price"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                    />
+                    </div>
+                    <div className="flex w-full md:w-auto self-end gap-2">
+                    <Button onClick={handleSold} className="flex-1 md:flex-none" disabled={isProcessing}>
+                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Sold
+                    </Button>
+                    <Button onClick={handleUnsold} variant="outline" className="flex-1 md:flex-none" disabled={isProcessing}>
+                        Unsold
+                    </Button>
+                    </div>
+                </CardFooter>
+            </Card>
+
+            {upcomingPlayers.length > 0 && (
+                <Card className="max-w-4xl mx-auto">
+                    <CardHeader>
+                        <CardTitle>Next Up Ahead</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[80px]">Sno.</TableHead>
+                                    <TableHead>Photo</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Position</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {upcomingPlayers.map((player, index) => (
+                                    <TableRow key={player.id}>
+                                        <TableCell>{index + 1}</TableCell>
+                                        <TableCell>
+                                            <Avatar>
+                                                <AvatarImage src={player.photoUrl} alt={player.name} />
+                                                <AvatarFallback><User /></AvatarFallback>
+                                            </Avatar>
+                                        </TableCell>
+                                        <TableCell>{player.name}</TableCell>
+                                        <TableCell>{player.player_position}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
       )}
     </>
   );
