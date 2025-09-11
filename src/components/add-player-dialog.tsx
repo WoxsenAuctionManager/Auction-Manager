@@ -137,7 +137,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <ScrollArea className="pr-6 max-h-[60vh]">
+            <ScrollArea className="h-[60vh] pr-6">
             <div className="space-y-4">
             <FormField
               control={form.control}
