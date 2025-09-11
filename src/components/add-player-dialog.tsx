@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc, DocumentData } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +36,7 @@ const playerSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
-  photo: z.any(),
+  photoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -60,31 +59,20 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
       year: "",
       department: "",
       player_position: "",
-      photo: undefined,
+      photoUrl: "",
     },
   });
-
-  const photoRef = form.register("photo");
 
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
-      let photoUrl = "";
-      const photoFile = data.photo?.[0];
-
-      if (photoFile) {
-        const storageRef = ref(storage, `player_photos/${Date.now()}_${photoFile.name}`);
-        const snapshot = await uploadBytes(storageRef, photoFile);
-        photoUrl = await getDownloadURL(snapshot.ref);
-      }
-      
       const docData = {
         name: data.name,
         contact: data.contact,
         year: data.year,
         department: data.department,
         player_position: data.player_position,
-        photoUrl: photoUrl,
+        photoUrl: data.photoUrl || "",
       };
 
       const docRef = await addDoc(collection(db, "players"), docData);
@@ -192,12 +180,12 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
             />
             <FormField
               control={form.control}
-              name="photo"
-              render={() => (
+              name="photoUrl"
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player Photo</FormLabel>
+                  <FormLabel>Player Photo URL</FormLabel>
                   <FormControl>
-                    <Input type="file" {...photoRef} />
+                    <Input placeholder="https://example.com/photo.jpg" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
