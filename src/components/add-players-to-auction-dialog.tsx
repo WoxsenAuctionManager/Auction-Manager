@@ -96,6 +96,15 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
     });
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedPlayers(Array.from(new Map([...selectedPlayers, ...filteredPlayers].map(p => [p.id, p])).values()));
+    } else {
+      const filteredPlayerIds = new Set(filteredPlayers.map(p => p.id));
+      setSelectedPlayers(selectedPlayers.filter(p => !filteredPlayerIds.has(p.id)));
+    }
+  };
+
   const handleAddPlayers = () => {
     onPlayersAdded(selectedPlayers);
     onOpenChange(false);
@@ -104,6 +113,12 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
         description: `${selectedPlayers.length} player(s) have been added to the auction queue.`
     });
   };
+
+  const areAllFilteredPlayersSelected = useMemo(() => {
+    if (filteredPlayers.length === 0) return false;
+    const filteredPlayerIds = new Set(filteredPlayers.map(p => p.id));
+    return Array.from(filteredPlayerIds).every(id => selectedPlayers.some(p => p.id === id));
+  }, [filteredPlayers, selectedPlayers]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -140,6 +155,19 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
                     </SelectContent>
                 </Select>
             </div>
+
+            <div className="flex items-center space-x-2 border-b pb-2">
+                <Checkbox
+                    id="select-all"
+                    checked={areAllFilteredPlayersSelected}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    disabled={filteredPlayers.length === 0}
+                />
+                <Label htmlFor="select-all" className="font-medium cursor-pointer">
+                    Select All
+                </Label>
+            </div>
+            
             <ScrollArea className="h-[40vh] border rounded-md p-2">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
