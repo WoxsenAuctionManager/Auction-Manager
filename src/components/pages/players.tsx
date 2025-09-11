@@ -4,10 +4,21 @@ import { useState, useEffect, useMemo } from "react";
 import {
   collection,
   getDocs,
-  addDoc,
+  doc,
+  deleteDoc,
   DocumentData,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Alert,
   AlertDescription,
@@ -29,15 +40,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, AlertCircle, PlusCircle, User } from "lucide-react";
+import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
 import { AddPlayerDialog } from "../add-player-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Player {
   id: string;
@@ -55,6 +66,8 @@ export function PlayersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const { toast } = useToast();
 
   const fetchPlayers = async () => {
     setLoading(true);
@@ -83,6 +96,32 @@ export function PlayersPage() {
 
   const handlePlayerAdded = (newPlayer: DocumentData) => {
     setPlayers((prevPlayers) => [...prevPlayers, newPlayer as Player]);
+  };
+
+  const handleEdit = (player: Player) => {
+    // TODO: Implement edit functionality
+    console.log("Editing player:", player);
+  };
+
+  const handleDelete = async () => {
+    if (!playerToDelete) return;
+    try {
+      await deleteDoc(doc(db, "players", playerToDelete.id));
+      setPlayers(players.filter((p) => p.id !== playerToDelete.id));
+      toast({
+        title: "Player Deleted",
+        description: `${playerToDelete.name} has been successfully deleted.`,
+      });
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete player. Please try again.",
+      });
+    } finally {
+      setPlayerToDelete(null);
+    }
   };
 
   const filteredPlayers = useMemo(() => {
@@ -143,9 +182,7 @@ export function PlayersPage() {
                 <TableHead>Year</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Player Position</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -172,7 +209,7 @@ export function PlayersPage() {
                     <TableCell>{player.year}</TableCell>
                     <TableCell>{player.department}</TableCell>
                     <TableCell>{player.player_position}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -181,8 +218,17 @@ export function PlayersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(player)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setPlayerToDelete(player)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -199,6 +245,22 @@ export function PlayersPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      <AlertDialog open={!!playerToDelete} onOpenChange={(open) => !open && setPlayerToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete{" "}
+              <strong>{playerToDelete?.name}</strong> and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
