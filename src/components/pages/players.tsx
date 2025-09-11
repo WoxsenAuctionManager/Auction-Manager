@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   collection,
   getDocs,
-  query,
-  where,
+  addDoc,
   DocumentData,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -18,9 +17,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { AddPlayerDialog } from "../add-player-dialog";
 
 interface Player {
   id: string;
@@ -56,31 +54,37 @@ export function PlayersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+
+  const fetchPlayers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const playersCollection = collection(db, "players");
+      const playerSnapshot = await getDocs(playersCollection);
+      const playersList = playerSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Player[];
+      setPlayers(playersList);
+    } catch (err) {
+      console.error(err);
+      setError(
+        "Failed to load players. Please check your internet connection and Firestore permissions."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPlayers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const playersCollection = collection(db, "players");
-        const playerSnapshot = await getDocs(playersCollection);
-        const playersList = playerSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Player[];
-        setPlayers(playersList);
-      } catch (err) {
-        console.error(err);
-        setError(
-          "Failed to load players. Please check your internet connection and Firestore permissions."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPlayers();
   }, []);
+
+  const handlePlayerAdded = (newPlayer: DocumentData) => {
+    setPlayers((prevPlayers) => [...prevPlayers, { id: newPlayer.id, ...newPlayer.data() } as Player]);
+    fetchPlayers();
+  };
 
   const filteredPlayers = useMemo(() => {
     return players.filter((player) =>
@@ -97,10 +101,16 @@ export function PlayersPage() {
             Browse and search for players in the league.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddPlayerDialogOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Player
         </Button>
       </div>
+
+      <AddPlayerDialog
+        open={isAddPlayerDialogOpen}
+        onOpenChange={setIsAddPlayerDialogOpen}
+        onPlayerAdded={handlePlayerAdded}
+      />
 
       {error && (
         <Alert variant="destructive">
