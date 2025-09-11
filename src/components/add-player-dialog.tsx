@@ -223,9 +223,19 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Player Position</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a position" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Forward">Forward</SelectItem>
+                          <SelectItem value="Mid Fielder">Mid Fielder</SelectItem>
+                          <SelectItem value="Defender">Defender</SelectItem>
+                          <SelectItem value="Goal Keeper">Goal Keeper</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
