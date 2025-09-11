@@ -30,15 +30,15 @@ export function AuctionSettingsPage() {
                     <form className="grid gap-6">
                         <div className="grid gap-3">
                             <Label htmlFor="initial-purse">Initial Purse of the team</Label>
-                            <Input id="initial-purse" type="number" placeholder="e.g., 100000" />
+                            <Input id="initial-purse" type="number" />
                         </div>
                         <div className="grid gap-3">
                             <Label htmlFor="retentions">No. of Retentions per team</Label>
-                            <Input id="retentions" type="number" placeholder="e.g., 3" />
+                            <Input id="retentions" type="number" />
                         </div>
                         <div className="grid gap-3">
                             <Label htmlFor="retention-price">Price for each Retention</Label>
-                            <Input id="retention-price" type="number" placeholder="e.g., 10000" />
+                            <Input id="retention-price" type="number" />
                         </div>
                     </form>
                 </CardContent>
