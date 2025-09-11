@@ -167,10 +167,10 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                 />
                 <FormField
                   control={form.control}
-                  name="year"
+                  name="department"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Year</FormLabel>
+                      <FormLabel>Department</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -180,10 +180,10 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                 />
                 <FormField
                   control={form.control}
-                  name="department"
+                  name="year"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Department</FormLabel>
+                      <FormLabel>Year</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
