@@ -5,36 +5,59 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { db } from '@/lib/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
-const LOCAL_STORAGE_KEY = 'savedInput';
+const FIRESTORE_DOC_PATH = 'savedInput/latest';
 
 export function InputSaverForm() {
   const [inputValue, setInputValue] = useState('');
   const [savedValue, setSavedValue] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    setIsClient(true);
-    try {
-      const item = window.localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (item) {
-        setSavedValue(item);
-      }
-    } catch (error) {
-      console.error("Could not read from local storage", error);
-    }
-  }, []);
+    const docRef = doc(db, FIRESTORE_DOC_PATH);
+    getDoc(docRef)
+      .then((docSnap) => {
+        if (docSnap.exists()) {
+          setSavedValue(docSnap.data().text);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching document:", error);
+        toast({
+          title: "Error",
+          description: "Could not fetch data from Firestore. Please make sure Firestore is set up correctly in your Firebase project.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [toast]);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!inputValue.trim()) return;
 
     try {
-      window.localStorage.setItem(LOCAL_STORAGE_KEY, inputValue);
+      const docRef = doc(db, FIRESTORE_DOC_PATH);
+      await setDoc(docRef, { text: inputValue });
       setSavedValue(inputValue);
       setInputValue('');
+      toast({
+        title: "Success!",
+        description: "Your text has been saved to Firestore.",
+      });
     } catch (error) {
-      console.error("Could not write to local storage", error);
+      console.error("Could not write to Firestore", error);
+      toast({
+        title: "Error",
+        description: "Could not save to Firestore. Check your security rules.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -44,7 +67,7 @@ export function InputSaverForm() {
         <form onSubmit={handleSubmit}>
           <CardHeader>
             <CardTitle className="font-headline text-3xl">Input Saver</CardTitle>
-            <CardDescription>Enter some text and save it. It will be stored in your browser.</CardDescription>
+            <CardDescription>Enter some text and save it. It will be stored in Firestore.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -64,7 +87,16 @@ export function InputSaverForm() {
         </form>
       </Card>
 
-      {isClient && savedValue && (
+      {isLoading ? (
+         <Card className="shadow-lg animate-in fade-in-0 duration-700">
+          <CardHeader>
+            <CardTitle className="font-headline text-2xl">Saved Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg break-words text-foreground/90">Loading saved data...</p>
+          </CardContent>
+        </Card>
+      ) : savedValue && (
         <Card className="shadow-lg animate-in fade-in-0 duration-700">
           <CardHeader>
             <CardTitle className="font-headline text-2xl">Saved Preview</CardTitle>
