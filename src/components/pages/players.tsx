@@ -50,7 +50,7 @@ import {
 import { AddPlayerDialog } from "../add-player-dialog";
 import { useToast } from "@/hooks/use-toast";
 
-interface Player {
+export interface Player {
   id: string;
   name: string;
   contact: string;
@@ -67,6 +67,7 @@ export function PlayersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
   const { toast } = useToast();
 
   const fetchPlayers = async () => {
@@ -98,9 +99,17 @@ export function PlayersPage() {
     setPlayers((prevPlayers) => [...prevPlayers, newPlayer as Player]);
   };
 
+  const handlePlayerUpdated = (updatedPlayer: DocumentData) => {
+    setPlayers((prevPlayers) =>
+      prevPlayers.map((p) =>
+        p.id === updatedPlayer.id ? (updatedPlayer as Player) : p
+      )
+    );
+  };
+
   const handleEdit = (player: Player) => {
-    // TODO: Implement edit functionality
-    console.log("Editing player:", player);
+    setPlayerToEdit(player);
+    setIsAddPlayerDialogOpen(true);
   };
 
   const handleDelete = async () => {
@@ -123,6 +132,11 @@ export function PlayersPage() {
       setPlayerToDelete(null);
     }
   };
+  
+  const handleDialogClose = () => {
+    setIsAddPlayerDialogOpen(false);
+    setPlayerToEdit(null);
+  }
 
   const filteredPlayers = useMemo(() => {
     return players.filter((player) =>
@@ -139,15 +153,20 @@ export function PlayersPage() {
             Browse and search for players in the league.
           </p>
         </div>
-        <Button onClick={() => setIsAddPlayerDialogOpen(true)}>
+        <Button onClick={() => {
+          setPlayerToEdit(null);
+          setIsAddPlayerDialogOpen(true);
+        }}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Player
         </Button>
       </div>
 
       <AddPlayerDialog
         open={isAddPlayerDialogOpen}
-        onOpenChange={setIsAddPlayerDialogOpen}
+        onOpenChange={handleDialogClose}
         onPlayerAdded={handlePlayerAdded}
+        onPlayerUpdated={handlePlayerUpdated}
+        playerToEdit={playerToEdit}
       />
 
       {error && (

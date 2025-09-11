@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { collection, addDoc, DocumentData } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import type { Player } from "./pages/players";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -45,11 +46,14 @@ interface AddPlayerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPlayerAdded: (newPlayer: DocumentData) => void;
+  onPlayerUpdated: (updatedPlayer: DocumentData) => void;
+  playerToEdit?: Player | null;
 }
 
-export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayerDialogProps) {
+export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpdated, playerToEdit }: AddPlayerDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const isEditMode = !!playerToEdit;
 
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerSchema),
@@ -63,32 +67,56 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
     },
   });
 
+  useEffect(() => {
+    if (isEditMode && playerToEdit) {
+      form.reset(playerToEdit);
+    } else {
+      form.reset({
+        name: "",
+        contact: "",
+        year: "",
+        department: "",
+        player_position: "",
+        photoUrl: "",
+      });
+    }
+  }, [playerToEdit, isEditMode, form]);
+
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
-      const docData = {
-        name: data.name,
-        contact: data.contact,
-        year: data.year,
-        department: data.department,
-        player_position: data.player_position,
-        photoUrl: data.photoUrl || "",
-      };
+      if (isEditMode && playerToEdit) {
+        const playerDocRef = doc(db, "players", playerToEdit.id);
+        await updateDoc(playerDocRef, data);
+        onPlayerUpdated({ id: playerToEdit.id, ...data });
+        toast({
+          title: "Player Updated",
+          description: `${data.name} has been successfully updated.`,
+        });
+      } else {
+        const docData = {
+          name: data.name,
+          contact: data.contact,
+          year: data.year,
+          department: data.department,
+          player_position: data.player_position,
+          photoUrl: data.photoUrl || "",
+        };
 
-      const docRef = await addDoc(collection(db, "players"), docData);
-      onPlayerAdded({ id: docRef.id, ...docData });
-      toast({
-        title: "Player Added",
-        description: `${data.name} has been successfully added.`,
-      });
+        const docRef = await addDoc(collection(db, "players"), docData);
+        onPlayerAdded({ id: docRef.id, ...docData });
+        toast({
+          title: "Player Added",
+          description: `${data.name} has been successfully added.`,
+        });
+      }
       onOpenChange(false);
-      form.reset();
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error("Error saving document: ", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add player. Please try again.",
+        description: `Failed to ${isEditMode ? 'update' : 'add'} player. Please try again.`,
       });
     } finally {
       setIsSaving(false);
@@ -104,9 +132,9 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
     }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Player</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Player" : "Add New Player"}</DialogTitle>
           <DialogDescription>
-            Enter the details of the new player. Click save when you're done.
+            {isEditMode ? "Edit the details of the player." : "Enter the details of the new player."} Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -209,7 +237,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Player
+                Save Changes
               </Button>
             </DialogFooter>
           </form>
