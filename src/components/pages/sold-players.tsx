@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -19,9 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2 } from "lucide-react";
+import { User, Loader2, Search } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
+import { Input } from "../ui/input";
 
 interface SoldPlayer extends Player {
   price?: number;
@@ -34,6 +35,7 @@ export function SoldPlayersPage() {
   const [soldPlayers, setSoldPlayers] = useState<SoldPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchSoldPlayers = async () => {
@@ -81,16 +83,34 @@ export function SoldPlayersPage() {
     fetchSoldPlayers();
   }, []);
 
+  const filteredPlayers = useMemo(() => {
+    return soldPlayers.filter((player) =>
+      player.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [soldPlayers, searchTerm]);
+
   return (
     <>
-      <CardHeader className="px-0">
-        <CardTitle>Sold Players</CardTitle>
-        <CardDescription>
+      <div className="flex-1">
+        <h1 className="font-semibold text-3xl">Sold Players</h1>
+        <p className="text-muted-foreground mt-1">
           A list of all players who have been sold in the auction.
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
 
       <Card>
+        <CardHeader>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by player name..."
+              className="w-full pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -116,8 +136,8 @@ export function SoldPlayersPage() {
                     {error}
                   </TableCell>
                 </TableRow>
-              ) : soldPlayers.length > 0 ? (
-                soldPlayers.map((player, index) => (
+              ) : filteredPlayers.length > 0 ? (
+                filteredPlayers.map((player, index) => (
                   <TableRow key={player.id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
