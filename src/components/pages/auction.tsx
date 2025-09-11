@@ -320,7 +320,7 @@ export function AuctionPage() {
   
   const upcomingPlayers = useMemo(() => {
     if (!auctionStarted) {
-      return players;
+      return [];
     }
     if (!currentPlayer || players.length <= 1) {
       return [];
@@ -442,7 +442,7 @@ export function AuctionPage() {
                         id="price"
                         type="number"
                         placeholder="Enter price"
-                        value={price}
+                        value={price || ''}
                         onChange={(e) => setPrice(e.target.value)}
                     />
                 </div>
@@ -550,4 +550,5 @@ export function AuctionPage() {
   );
 }
 
+    
     
