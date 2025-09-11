@@ -34,6 +34,7 @@ const playerSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
+  photo_url: z.string().url({ message: "Please enter a valid URL." }),
 });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -56,16 +57,14 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
       year: "",
       department: "",
       player_position: "",
+      photo_url: "",
     },
   });
 
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
-      const docRef = await addDoc(collection(db, "players"), {
-        ...data,
-        photo_url: `https://i.pravatar.cc/150?u=${data.name}`
-      });
+      const docRef = await addDoc(collection(db, "players"), data);
       onPlayerAdded({ id: docRef.id, data: () => data });
       toast({
         title: "Player Added",
@@ -103,7 +102,20 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. John Doe" {...field} />
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="photo_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Player Photo URL</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,7 +128,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                 <FormItem>
                   <FormLabel>Contact</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. 123-456-7890" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +141,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                 <FormItem>
                   <FormLabel>Year</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. 2024" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -142,7 +154,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                 <FormItem>
                   <FormLabel>Department</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Computer Science" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -155,7 +167,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                 <FormItem>
                   <FormLabel>Player Position</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Forward" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
