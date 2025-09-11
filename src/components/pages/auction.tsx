@@ -84,16 +84,20 @@ export function AuctionPage() {
 
   const { toast } = useToast();
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (loadPlayers: boolean = false) => {
     setLoading(true);
     try {
-      const playersQuery = query(collection(db, "players"), where("status", "==", "queued"));
-      const playersSnapshot = await getDocs(playersQuery);
-      const playersList = playersSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as AuctionPlayer[];
-      setPlayers(playersList);
+      if (loadPlayers) {
+        const playersQuery = query(collection(db, "players"), where("status", "==", "queued"));
+        const playersSnapshot = await getDocs(playersQuery);
+        const playersList = playersSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as AuctionPlayer[];
+        setPlayers(playersList);
+      } else {
+        setPlayers([]);
+      }
 
       const teamsSnapshot = await getDocs(collection(db, "teams"));
       const teamsList = teamsSnapshot.docs.map((doc) => ({
@@ -298,7 +302,7 @@ export function AuctionPage() {
             description: "The auction has been reset. All players are now available."
         });
         
-        await fetchData();
+        await fetchData(false);
     } catch (error) {
         console.error("Error resetting auction:", error);
         toast({
