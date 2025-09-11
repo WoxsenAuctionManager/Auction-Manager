@@ -308,7 +308,7 @@ export function AuctionPage() {
       </div>
 
       {!currentPlayer ? (
-        <Card>
+        <Card className="max-w-4xl mx-auto">
             <CardContent className="pt-6">
                 <div className="text-center py-12">
                     <p className="text-xl font-semibold text-muted-foreground">
@@ -317,6 +317,33 @@ export function AuctionPage() {
                     <p className="text-muted-foreground mt-2">You can reset the auction to start over.</p>
                 </div>
             </CardContent>
+            <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
+                <div className="grid w-full md:w-auto md:flex-1 gap-2">
+                <Label htmlFor="team">Team</Label>
+                <Select disabled>
+                    <SelectTrigger id="team">
+                    <SelectValue placeholder="Select a team" />
+                    </SelectTrigger>
+                </Select>
+                </div>
+                <div className="grid w-full md:w-1/4 gap-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                    id="price"
+                    type="number"
+                    placeholder="Enter price"
+                    disabled
+                />
+                </div>
+                <div className="flex w-full md:w-auto self-end gap-2">
+                <Button className="flex-1 md:flex-none" disabled>
+                    Sold
+                </Button>
+                <Button variant="outline" className="flex-1 md:flex-none" disabled>
+                    Unsold
+                </Button>
+                </div>
+            </CardFooter>
         </Card>
       ) : (
         <div className="space-y-8">
