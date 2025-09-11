@@ -125,16 +125,16 @@ export function AuctionPage() {
   }, [fetchData]);
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
-    const newPlayerIds = new Set(newPlayers.map(p => p.id));
     setPlayers(prevPlayers => {
-        const existingPlayerIds = new Set(prevPlayers.map(p => p.id));
-        const combined = [...prevPlayers, ...newPlayers.filter(p => !existingPlayerIds.has(p.id))];
-        return combined;
+        const combined = [...prevPlayers, ...newPlayers];
+        // Simple deduplication based on ID
+        const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p])).values());
+        return uniquePlayers;
     });
     setAllPlayers(prevAll => {
-        const existingPlayerIds = new Set(prevAll.map(p => p.id));
-        const combined = [...prevAll, ...newPlayers.filter(p => !existingPlayerIds.has(p.id))];
-        return combined;
+        const combined = [...prevAll, ...newPlayers];
+        const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p])).values());
+        return uniquePlayers;
     });
   };
 
@@ -211,6 +211,10 @@ export function AuctionPage() {
 
     setCurrentPlayerIndex(prev => {
         if (prev + 1 >= players.length) {
+            toast({
+                title: "Auction Round Complete",
+                description: "All players have been auctioned in this round.",
+            });
             return 0;
         }
         return prev + 1;
@@ -220,41 +224,6 @@ export function AuctionPage() {
         title: "Player Unsold",
         description: `${currentPlayer.name} is unsold. Moving to the next player.`,
     });
-  };
-
-  const handleBack = async () => {
-    if (!lastAction) return;
-
-    setIsProcessing(true);
-    try {
-      const playerToRestore = lastAction.player;
-      const playerDocRef = doc(db, "players", playerToRestore.id);
-      
-      const previousState = {
-        teamId: lastAction.previousState.teamId || null,
-        price: lastAction.previousState.price || null,
-      };
-      await updateDoc(playerDocRef, previousState);
-      
-      // Full refresh to ensure consistency
-      await fetchData();
-
-      toast({
-        title: "Action Undone",
-        description: `The last action for ${playerToRestore.name} has been reverted.`,
-      });
-      setLastAction(null);
-
-    } catch (error) {
-      console.error("Error undoing action:", error);
-       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to undo the last action. Please try again.",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
   };
 
   const handleResetAuction = async () => {
@@ -277,7 +246,7 @@ export function AuctionPage() {
             description: "All players have been unassigned from their teams."
         });
         
-        fetchData();
+        await fetchData(); // Refetch all data to reset state
     } catch (error) {
         console.error("Error resetting auction:", error);
         toast({
@@ -300,10 +269,11 @@ export function AuctionPage() {
     if (!currentPlayer || players.length <= 1) {
       return [];
     }
-    return [
+    const upcoming = [
       ...players.slice(currentPlayerIndex + 1),
       ...players.slice(0, currentPlayerIndex)
     ];
+    return upcoming;
   }, [players, currentPlayerIndex, currentPlayer, auctionStarted]);
 
 
@@ -441,9 +411,6 @@ export function AuctionPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="font-semibold text-3xl">Live Auction</h1>
         <div className="flex gap-2">
-            <Button onClick={handleBack} disabled={!lastAction || isProcessing}>
-                <ArrowLeft className="mr-2" /> Back
-            </Button>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" disabled={isProcessing}>
@@ -521,7 +488,3 @@ export function AuctionPage() {
     </>
   );
 }
-
-    
-
-    
