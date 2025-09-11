@@ -88,7 +88,7 @@ export function AuctionPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const playersQuery = query(collection(db, "players"), where("status", "in", ["queued", null]));
+      const playersQuery = query(collection(db, "players"), where("status", "==", "queued"));
       const playersSnapshot = await getDocs(playersQuery);
       const allPlayersList = playersSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -562,7 +562,7 @@ export function AuctionPage() {
         open={isAddPlayersDialogOpen}
         onOpenChange={setIsAddPlayersDialogOpen}
         onPlayersAdded={handlePlayersAddedToAuction}
-        existingPlayers={players}
+        existingPlayers={allPlayers}
     />
     </>
   );
