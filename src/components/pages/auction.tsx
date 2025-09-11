@@ -68,6 +68,7 @@ interface LastAction {
 
 export function AuctionPage() {
   const [players, setPlayers] = useState<AuctionPlayer[]>([]);
+  const [allUnsoldPlayers, setAllUnsoldPlayers] = useState<AuctionPlayer[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState("");
@@ -81,7 +82,6 @@ export function AuctionPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch players not yet assigned to a team
       const playersQuery = query(
         collection(db, "players"),
         where("teamId", "==", null)
@@ -92,8 +92,8 @@ export function AuctionPage() {
         ...doc.data(),
       })) as AuctionPlayer[];
       setPlayers(playersList);
+      setAllUnsoldPlayers(playersList);
 
-      // Fetch teams
       const teamsSnapshot = await getDocs(collection(db, "teams"));
       const teamsList = teamsSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -150,9 +150,16 @@ export function AuctionPage() {
         },
       });
 
-      setPlayers(prev => prev.filter(p => p.id !== currentPlayer.id));
+      const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
+      setPlayers(updatedPlayers);
+      setAllUnsoldPlayers(allUnsoldPlayers.filter(p => p.id !== currentPlayer.id));
+      
       setSelectedTeam("");
       setPrice("");
+      if (currentPlayerIndex >= updatedPlayers.length) {
+        setCurrentPlayerIndex(0); 
+      }
+
 
       toast({
         title: "Player Sold!",
@@ -199,18 +206,16 @@ export function AuctionPage() {
       const playerToRestore = lastAction.player;
       const playerDocRef = doc(db, "players", playerToRestore.id);
       
-      // Revert player data in Firestore
       await updateDoc(playerDocRef, {
         teamId: lastAction.previousState.teamId || null,
         price: lastAction.previousState.price || null,
       });
 
-      // If player was unsold, put them back in the current position
-      if (!lastAction.previousState.teamId) {
-          setCurrentPlayerIndex(prev => prev -1);
+      if (lastAction.previousState.teamId === null) { 
+        setCurrentPlayerIndex(prev => prev > 0 ? prev - 1 : 0);
       } else {
-        // If player was sold, add them back to the start of the list
         setPlayers(prev => [playerToRestore, ...prev]);
+        setAllUnsoldPlayers(prev => [playerToRestore, ...prev]);
         setCurrentPlayerIndex(0);
       }
 
@@ -218,7 +223,7 @@ export function AuctionPage() {
         title: "Action Undone",
         description: `The last action for ${playerToRestore.name} has been reverted.`,
       });
-      setLastAction(null); // Can only undo once
+      setLastAction(null);
 
     } catch (error) {
       console.error("Error undoing action:", error);
@@ -252,7 +257,7 @@ export function AuctionPage() {
             description: "All players have been unassigned from their teams."
         });
         
-        fetchData(); // Refresh the data
+        fetchData();
     } catch (error) {
         console.error("Error resetting auction:", error);
         toast({
@@ -267,7 +272,7 @@ export function AuctionPage() {
 
 
   const currentPlayer = players[currentPlayerIndex];
-  const upcomingPlayers = players.slice(currentPlayerIndex + 1);
+  const upcomingPlayers = allUnsoldPlayers.filter(p => p.id !== currentPlayer?.id);
 
   if (loading) {
     return (
@@ -310,10 +315,14 @@ export function AuctionPage() {
       <Card className="max-w-4xl mx-auto">
         {!currentPlayer ? (
           <>
+            <CardHeader>
+                <CardTitle className="text-center text-3xl">Auction Finished</CardTitle>
+                <CardDescription className="text-center">No more players to auction.</CardDescription>
+            </CardHeader>
             <CardContent className="pt-6">
                 <div className="text-center py-12">
                     <p className="text-xl font-semibold text-muted-foreground">
-                        No more players to auction.
+                        All players have been auctioned.
                     </p>
                     <p className="text-muted-foreground mt-2">You can reset the auction to start over.</p>
                 </div>
@@ -452,3 +461,5 @@ export function AuctionPage() {
     </div>
   );
 }
+
+    
