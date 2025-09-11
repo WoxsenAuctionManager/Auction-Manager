@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
   Card,
@@ -19,15 +19,35 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2, Search } from "lucide-react";
+import { User, Loader2, Search, MoreHorizontal, Trash2 } from "lucide-react";
 import type { Player } from "./players";
 import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export function UnsoldPlayersPage() {
   const [unsoldPlayers, setUnsoldPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchUnsoldPlayers = async () => {
@@ -54,6 +74,29 @@ export function UnsoldPlayersPage() {
 
     fetchUnsoldPlayers();
   }, []);
+  
+  const handleRemove = async () => {
+    if (!playerToRemove) return;
+    try {
+      const playerDocRef = doc(db, "players", playerToRemove.id);
+      await updateDoc(playerDocRef, { status: 'queued' });
+
+      setUnsoldPlayers(players => players.filter(p => p.id !== playerToRemove.id));
+      toast({
+        title: "Player Removed",
+        description: `${playerToRemove.name} has been moved back to the available players list.`,
+      });
+    } catch (error) {
+      console.error("Error removing player:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove player. Please try again.",
+      });
+    } finally {
+      setPlayerToRemove(null);
+    }
+  };
 
   const filteredPlayers = useMemo(() => {
     return unsoldPlayers.filter((player) =>
@@ -94,18 +137,19 @@ export function UnsoldPlayersPage() {
                 <TableHead>Department</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead>Player Position</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
+                  <TableCell colSpan={8} className="text-center h-24">
                      <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : error ? (
                  <TableRow>
-                  <TableCell colSpan={7} className="text-center text-destructive">
+                  <TableCell colSpan={8} className="text-center text-destructive">
                     {error}
                   </TableCell>
                 </TableRow>
@@ -131,11 +175,30 @@ export function UnsoldPlayersPage() {
                     <TableCell>{player.department}</TableCell>
                     <TableCell>{player.year}</TableCell>
                     <TableCell>{player.player_position}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => setPlayerToRemove(player)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center">
+                  <TableCell colSpan={8} className="text-center">
                     No unsold players found.
                   </TableCell>
                 </TableRow>
@@ -144,6 +207,21 @@ export function UnsoldPlayersPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      <AlertDialog open={!!playerToRemove} onOpenChange={(open) => !open && setPlayerToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <strong>{playerToRemove?.name}</strong> from the unsold list and make them available for auction again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemove}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
