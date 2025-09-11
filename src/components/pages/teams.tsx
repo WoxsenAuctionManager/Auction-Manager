@@ -163,7 +163,7 @@ export function TeamsPage() {
                             <Card key={team.id}>
                                 <CardHeader className="items-center text-center">
                                     <Avatar className="h-24 w-24 mb-4">
-                                        <AvatarImage src={team.logoUrl} alt={team.name} />
+                                        <AvatarImage src={team.logoUrl || undefined} alt={team.name} />
                                         <AvatarFallback><Shield /></AvatarFallback>
                                     </Avatar>
                                     <CardTitle>{team.name}</CardTitle>
