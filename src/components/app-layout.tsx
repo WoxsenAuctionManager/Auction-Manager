@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Cuboid, Users, Shield, Settings, Menu, ClipboardList } from "lucide-react";
+import { Cuboid, Users, Shield, Settings, Menu, ClipboardList, Gavel } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useState } from "react";
 
@@ -21,6 +21,7 @@ const navLinks = [
   { href: "/", label: "Player's List", icon: Users },
   { href: "/teams", label: "Teams", icon: Shield },
   { href: "/team-roster", label: "Team Roster", icon: ClipboardList },
+  { href: "/auction", label: "Auction", icon: Gavel },
   { href: "/auction-settings", label: "Auction Settings", icon: Settings },
 ];
 
