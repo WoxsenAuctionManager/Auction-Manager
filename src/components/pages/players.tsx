@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   collection,
   getDocs,
   doc,
   deleteDoc,
   DocumentData,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import * as XLSX from "xlsx";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil } from "lucide-react";
+import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +53,7 @@ import {
 import { AddPlayerDialog } from "../add-player-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerProfileDialog } from "../player-profile-dialog";
+import { ImportPlayersDialog } from "../import-players-dialog";
 
 export interface Player {
   id: string;
@@ -70,6 +74,11 @@ export function PlayersPage() {
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isImportPlayerDialogOpen, setIsImportPlayerDialogOpen] = useState(false);
+  const [importedPlayers, setImportedPlayers] = useState<Omit<Player, 'id'>[]>([]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const fetchPlayers = async () => {
@@ -140,6 +149,70 @@ export function PlayersPage() {
     setPlayerToEdit(null);
   }
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
+        
+        const newPlayers = json.map((row: any) => ({
+          name: row.Name || '',
+          contact: String(row.Contact || ''),
+          department: row.Department || '',
+          year: String(row.Year || ''),
+          player_position: row.Position || '',
+          photoUrl: row['Photo URL'] || '',
+        }));
+
+        setImportedPlayers(newPlayers);
+        setIsImportPlayerDialogOpen(true);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+     // Reset file input to allow re-uploading the same file
+     if(fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    setIsImporting(true);
+    try {
+      const batch = writeBatch(db);
+      importedPlayers.forEach(player => {
+        const newPlayerRef = doc(collection(db, "players"));
+        batch.set(newPlayerRef, { ...player, status: 'queued' });
+      });
+
+      await batch.commit();
+
+      toast({
+        title: "Import Successful",
+        description: `${importedPlayers.length} players have been successfully imported.`,
+      });
+
+      fetchPlayers(); // Re-fetch players to update the list
+      
+    } catch (error) {
+      console.error("Error importing players: ", error);
+      toast({
+        variant: "destructive",
+        title: "Import Failed",
+        description: "An error occurred while importing players. Please check the file and try again.",
+      });
+    } finally {
+      setIsImporting(false);
+      setIsImportPlayerDialogOpen(false);
+      setImportedPlayers([]);
+    }
+  };
+
+
   const filteredPlayers = useMemo(() => {
     return players.filter((player) =>
       player.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -148,13 +221,23 @@ export function PlayersPage() {
 
   return (
     <>
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         <div className="flex-1">
           <h1 className="font-semibold text-3xl">Player's List</h1>
           <p className="text-muted-foreground mt-1">
             Browse and search for players in the league.
           </p>
         </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept=".xlsx, .xls, .csv"
+        />
+        <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+          <Upload className="mr-2 h-4 w-4" /> Import Players
+        </Button>
         <Button onClick={() => {
           setPlayerToEdit(null);
           setIsAddPlayerDialogOpen(true);
@@ -176,6 +259,15 @@ export function PlayersPage() {
         open={!!selectedPlayer}
         onOpenChange={() => setSelectedPlayer(null)}
       />
+
+      <ImportPlayersDialog
+        open={isImportPlayerDialogOpen}
+        onOpenChange={setIsImportPlayerDialogOpen}
+        onConfirmImport={handleConfirmImport}
+        players={importedPlayers}
+        isImporting={isImporting}
+      />
+
 
       {error && (
         <Alert variant="destructive">
