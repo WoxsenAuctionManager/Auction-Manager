@@ -20,7 +20,7 @@ const navLinks = [
   { href: "/", label: "Player's List", icon: Users },
   { href: "/teams", label: "Teams", icon: Shield },
   { href: "/team-roster", label: "Team Roster", icon: ClipboardList },
-  { href: "/auction-settings", label: "Auction", icon: Settings },
+  { href: "/auction-settings", label: "Auction Settings", icon: Settings },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
