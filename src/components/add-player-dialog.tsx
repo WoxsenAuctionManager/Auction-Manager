@@ -30,6 +30,13 @@ import { Loader2 } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import type { Player } from "./pages/players";
 import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -171,9 +178,17 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Department</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a department" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Student">Student</SelectItem>
+                          <SelectItem value="Staff">Staff</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
