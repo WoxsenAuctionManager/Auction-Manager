@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/table";
 import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 
-type AuctionPlayer = Player & { price?: number; teamId?: string };
+type AuctionPlayer = Player & { price?: number; teamId?: string; status?: 'sold' | 'unsold' | 'queued' };
 
 interface ActionRecord {
   type: "sold" | "unsold";
@@ -88,15 +88,14 @@ export function AuctionPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const playersSnapshot = await getDocs(collection(db, "players"));
+      const playersQuery = query(collection(db, "players"), where("status", "in", ["queued", null]));
+      const playersSnapshot = await getDocs(playersQuery);
       const allPlayersList = playersSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as AuctionPlayer[];
       setAllPlayers(allPlayersList);
-
-      const unsoldPlayersList = allPlayersList.filter(p => !p.teamId);
-      setPlayers(unsoldPlayersList);
+      setPlayers(allPlayersList);
 
       const teamsSnapshot = await getDocs(collection(db, "teams"));
       const teamsList = teamsSnapshot.docs.map((doc) => ({
@@ -167,6 +166,7 @@ export function AuctionPage() {
       const soldData = {
         teamId: selectedTeam,
         price: Number(price),
+        status: 'sold' as const,
       };
       await updateDoc(playerDocRef, soldData);
 
@@ -201,9 +201,11 @@ export function AuctionPage() {
     }
   };
 
-  const handleUnsold = () => {
+  const handleUnsold = async () => {
     const currentPlayer = players[currentPlayerIndex];
     if (!currentPlayer) return;
+
+    setIsProcessing(true);
     
     const newAction: ActionRecord = {
       type: "unsold",
@@ -212,23 +214,36 @@ export function AuctionPage() {
       previousPlayers: [...players],
       previousCurrentPlayerIndex: currentPlayerIndex,
     };
-    setActionHistory(prev => [...prev, newAction]);
 
-    setCurrentPlayerIndex(prev => {
-        if (prev + 1 >= players.length) {
-            toast({
-                title: "Auction Round Complete",
-                description: "All players have been auctioned in this round.",
-            });
-            return 0;
+    try {
+        const playerDocRef = doc(db, "players", currentPlayer.id);
+        await updateDoc(playerDocRef, { status: 'unsold' });
+        
+        setActionHistory(prev => [...prev, newAction]);
+
+        const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
+        setPlayers(updatedPlayers);
+        setAllPlayers(prevAll => prevAll.map(p => p.id === currentPlayer.id ? { ...p, status: 'unsold' } : p));
+        
+        if (currentPlayerIndex >= updatedPlayers.length) {
+            setCurrentPlayerIndex(0);
         }
-        return prev + 1;
-    });
 
-    toast({
-        title: "Player Unsold",
-        description: `${currentPlayer.name} is unsold. Moving to the next player.`,
-    });
+        toast({
+            title: "Player Unsold",
+            description: `${currentPlayer.name} is unsold. Moving to the next player.`,
+        });
+
+    } catch (error) {
+        console.error("Error marking player as unsold:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to mark player as unsold. Please try again.",
+        });
+    } finally {
+        setIsProcessing(false);
+    }
   };
 
   const handleUndo = async () => {
@@ -241,17 +256,33 @@ export function AuctionPage() {
     const lastAction = actionHistory[actionHistory.length - 1];
 
     try {
+      const playerDocRef = doc(db, "players", lastAction.player.id);
       if (lastAction.type === "sold") {
-        const playerDocRef = doc(db, "players", lastAction.player.id);
         await updateDoc(playerDocRef, {
-          teamId: lastAction.previousPlayerState.teamId || null,
-          price: lastAction.previousPlayerState.price || null,
+          teamId: null,
+          price: null,
+          status: 'queued',
         });
+      } else if (lastAction.type === "unsold") {
+         await updateDoc(playerDocRef, { status: 'queued' });
       }
 
       setPlayers(lastAction.previousPlayers);
       setCurrentPlayerIndex(lastAction.previousCurrentPlayerIndex);
-      setAllPlayers(prevAll => prevAll.map(p => p.id === lastAction.player.id ? lastAction.previousPlayerState : p));
+      
+      // Revert allPlayers state
+      const revertedAllPlayers = allPlayers.map(p => {
+          if (p.id === lastAction.player.id) {
+              return lastAction.previousPlayerState;
+          }
+          return p;
+      });
+      // Add player back if they were removed
+      if (!revertedAllPlayers.find(p => p.id === lastAction.player.id)) {
+        revertedAllPlayers.push(lastAction.previousPlayerState);
+      }
+      setAllPlayers(revertedAllPlayers);
+
 
       setActionHistory(prev => prev.slice(0, -1));
       toast({
@@ -274,20 +305,19 @@ export function AuctionPage() {
     setIsProcessing(true);
     try {
         const playersRef = collection(db, "players");
-        const q = query(playersRef, where("teamId", "!=", null));
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(playersRef);
         
         const batch = writeBatch(db);
         querySnapshot.forEach((playerDoc) => {
             const docRef = doc(db, "players", playerDoc.id);
-            batch.update(docRef, { teamId: null, price: null });
+            batch.update(docRef, { teamId: null, price: null, status: 'queued' });
         });
         
         await batch.commit();
         
         toast({
             title: "Auction Reset",
-            description: "All players have been unassigned from their teams."
+            description: "The auction has been reset. All players are now available."
         });
         
         await fetchData(); // Refetch all data to reset state
@@ -537,5 +567,3 @@ export function AuctionPage() {
     </>
   );
 }
-
-    

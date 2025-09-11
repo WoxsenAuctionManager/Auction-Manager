@@ -36,7 +36,7 @@ export function UnsoldPlayersPage() {
       try {
         const playersQuery = query(
           collection(db, "players"),
-          where("teamId", "==", null)
+          where("status", "==", "unsold")
         );
         const playerSnapshot = await getDocs(playersQuery);
         const playersList = playerSnapshot.docs.map((doc) => ({
