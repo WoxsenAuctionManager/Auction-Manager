@@ -10,6 +10,7 @@ import {
   query,
   where,
   writeBatch,
+  DocumentData,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -33,7 +34,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -55,6 +56,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string };
 
@@ -67,6 +69,7 @@ interface LastAction {
 }
 
 export function AuctionPage() {
+  const [allPlayers, setAllPlayers] = useState<AuctionPlayer[]>([]);
   const [players, setPlayers] = useState<AuctionPlayer[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -76,6 +79,7 @@ export function AuctionPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastAction, setLastAction] = useState<LastAction | null>(null);
   const [auctionStarted, setAuctionStarted] = useState(false);
+  const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
 
 
   const { toast } = useToast();
@@ -83,16 +87,15 @@ export function AuctionPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const playersQuery = query(
-        collection(db, "players"),
-        where("teamId", "==", null)
-      );
-      const playersSnapshot = await getDocs(playersQuery);
-      const playersList = playersSnapshot.docs.map((doc) => ({
+      const playersSnapshot = await getDocs(collection(db, "players"));
+      const allPlayersList = playersSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as AuctionPlayer[];
-      setPlayers(playersList);
+      setAllPlayers(allPlayersList);
+
+      const unsoldPlayersList = allPlayersList.filter(p => !p.teamId);
+      setPlayers(unsoldPlayersList);
 
       const teamsSnapshot = await getDocs(collection(db, "teams"));
       const teamsList = teamsSnapshot.docs.map((doc) => ({
@@ -120,6 +123,20 @@ export function AuctionPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
+    const newPlayerIds = new Set(newPlayers.map(p => p.id));
+    setPlayers(prevPlayers => {
+        const existingPlayerIds = new Set(prevPlayers.map(p => p.id));
+        const combined = [...prevPlayers, ...newPlayers.filter(p => !existingPlayerIds.has(p.id))];
+        return combined;
+    });
+    setAllPlayers(prevAll => {
+        const existingPlayerIds = new Set(prevAll.map(p => p.id));
+        const combined = [...prevAll, ...newPlayers.filter(p => !existingPlayerIds.has(p.id))];
+        return combined;
+    });
+  };
 
   const handleSold = async () => {
     if (!selectedTeam || !price) {
@@ -153,6 +170,7 @@ export function AuctionPage() {
 
       const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
       setPlayers(updatedPlayers);
+      setAllPlayers(prevAll => prevAll.map(p => p.id === currentPlayer.id ? { ...p, ...soldData } : p));
       
       setSelectedTeam("");
       setPrice("");
@@ -212,10 +230,11 @@ export function AuctionPage() {
       const playerToRestore = lastAction.player;
       const playerDocRef = doc(db, "players", playerToRestore.id);
       
-      await updateDoc(playerDocRef, {
+      const previousState = {
         teamId: lastAction.previousState.teamId || null,
         price: lastAction.previousState.price || null,
-      });
+      };
+      await updateDoc(playerDocRef, previousState);
       
       // Full refresh to ensure consistency
       await fetchData();
@@ -272,14 +291,12 @@ export function AuctionPage() {
 };
 
 
-  const currentPlayer = players[currentPlayerIndex];
+  const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   
   const upcomingPlayers = useMemo(() => {
     if (!currentPlayer || players.length <= 1) {
       return [];
     }
-    // Create a new array of players, starting from the one after the current player,
-    // and wrapping around to the beginning, excluding the current player.
     return [
       ...players.slice(currentPlayerIndex + 1),
       ...players.slice(0, currentPlayerIndex)
@@ -307,7 +324,6 @@ export function AuctionPage() {
                         <p className="text-xl font-semibold text-muted-foreground">
                             The auction is ready to start.
                         </p>
-                        <p className="text-muted-foreground mt-2">Once started, players will be presented one by one.</p>
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-center border-t pt-6">
@@ -417,6 +433,7 @@ export function AuctionPage() {
 
 
   return (
+    <>
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="font-semibold text-3xl">Live Auction</h1>
@@ -449,8 +466,11 @@ export function AuctionPage() {
       {renderAuctionContent()}
 
       <Card className="max-w-4xl mx-auto">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Next Up Ahead</CardTitle>
+              <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Player
+              </Button>
           </CardHeader>
           <CardContent>
               <Table>
@@ -489,6 +509,13 @@ export function AuctionPage() {
           </CardContent>
       </Card>
     </div>
+    <AddPlayersToAuctionDialog
+        open={isAddPlayersDialogOpen}
+        onOpenChange={setIsAddPlayersDialogOpen}
+        onPlayersAdded={handlePlayersAddedToAuction}
+        existingPlayers={players}
+    />
+    </>
   );
 }
 
