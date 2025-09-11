@@ -33,7 +33,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -75,6 +75,8 @@ export function AuctionPage() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastAction, setLastAction] = useState<LastAction | null>(null);
+  const [auctionStarted, setAuctionStarted] = useState(false);
+
 
   const { toast } = useToast();
 
@@ -101,6 +103,7 @@ export function AuctionPage() {
       
       setCurrentPlayerIndex(0);
       setLastAction(null);
+      setAuctionStarted(false);
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -292,6 +295,128 @@ export function AuctionPage() {
     );
   }
 
+  const renderAuctionContent = () => {
+    if (!auctionStarted) {
+        return (
+            <Card className="max-w-4xl mx-auto">
+                <CardHeader>
+                    <CardTitle className="text-center text-3xl">Welcome to the Auction</CardTitle>
+                    <CardDescription className="text-center">Click the button below to begin the auction.</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                    <div className="text-center py-12">
+                        <p className="text-xl font-semibold text-muted-foreground">
+                            The auction is ready to start.
+                        </p>
+                        <p className="text-muted-foreground mt-2">Once started, players will be presented one by one.</p>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex justify-center border-t pt-6">
+                    <Button size="lg" onClick={() => setAuctionStarted(true)} disabled={players.length === 0}>
+                        <PlayCircle className="mr-2" /> Start Auction
+                    </Button>
+                </CardFooter>
+            </Card>
+        );
+    }
+
+    if (!currentPlayer) {
+        return (
+            <Card className="max-w-4xl mx-auto">
+                <CardHeader>
+                    <CardTitle className="text-center text-3xl">Auction Finished</CardTitle>
+                    <CardDescription className="text-center">No more players to auction.</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                    <div className="text-center py-12">
+                        <p className="text-xl font-semibold text-muted-foreground">
+                            All players have been auctioned.
+                        </p>
+                        <p className="text-muted-foreground mt-2">You can reset the auction to start over.</p>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
+                    <div className="grid w-full md:w-auto md:flex-1 gap-2">
+                        <Label htmlFor="team">Team</Label>
+                        <Select disabled>
+                            <SelectTrigger id="team">
+                                <SelectValue placeholder="Select a team" />
+                            </SelectTrigger>
+                        </Select>
+                    </div>
+                    <div className="grid w-full md:w-1/4 gap-2">
+                        <Label htmlFor="price">Price</Label>
+                        <Input id="price" type="number" placeholder="Enter price" disabled />
+                    </div>
+                    <div className="flex w-full md:w-auto self-end gap-2">
+                        <Button className="flex-1 md:flex-none" disabled>Sold</Button>
+                        <Button variant="outline" className="flex-1 md:flex-none" disabled>Unsold</Button>
+                    </div>
+                </CardFooter>
+            </Card>
+        )
+    }
+
+    return (
+        <Card className="max-w-4xl mx-auto">
+            <CardHeader>
+                <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col md:flex-row items-center gap-8">
+                <Avatar className="h-48 w-48 border-4 border-primary">
+                    <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} />
+                    <AvatarFallback className="text-6xl"><User /></AvatarFallback>
+                </Avatar>
+                <div className="w-full space-y-3">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
+                        <p className="font-medium text-muted-foreground">Department</p>
+                        <p>{currentPlayer.department}</p>
+                        <p className="font-medium text-muted-foreground">Year</p>
+                        <p>{currentPlayer.year}</p>
+                        <p className="font-medium text-muted-foreground">Position</p>
+                        <p>{currentPlayer.player_position}</p>
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
+                <div className="grid w-full md:w-auto md:flex-1 gap-2">
+                    <Label htmlFor="team">Team</Label>
+                    <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                        <SelectTrigger id="team">
+                            <SelectValue placeholder="Select a team" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid w-full md:w-1/4 gap-2">
+                    <Label htmlFor="price">Price</Label>
+                    <Input
+                        id="price"
+                        type="number"
+                        placeholder="Enter price"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                    />
+                </div>
+                <div className="flex w-full md:w-auto self-end gap-2">
+                    <Button onClick={handleSold} className="flex-1 md:flex-none" disabled={isProcessing}>
+                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Sold
+                    </Button>
+                    <Button onClick={handleUnsold} variant="outline" className="flex-1 md:flex-none" disabled={isProcessing}>
+                        Unsold
+                    </Button>
+                </div>
+            </CardFooter>
+        </Card>
+    );
+};
+
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-6">
@@ -322,111 +447,7 @@ export function AuctionPage() {
         </div>
       </div>
 
-      <Card className="max-w-4xl mx-auto">
-        {!currentPlayer ? (
-          <>
-            <CardHeader>
-                <CardTitle className="text-center text-3xl">Auction Finished</CardTitle>
-                <CardDescription className="text-center">No more players to auction.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-                <div className="text-center py-12">
-                    <p className="text-xl font-semibold text-muted-foreground">
-                        All players have been auctioned.
-                    </p>
-                    <p className="text-muted-foreground mt-2">You can reset the auction to start over.</p>
-                </div>
-            </CardContent>
-            <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
-                <div className="grid w-full md:w-auto md:flex-1 gap-2">
-                <Label htmlFor="team">Team</Label>
-                <Select disabled>
-                    <SelectTrigger id="team">
-                    <SelectValue placeholder="Select a team" />
-                    </SelectTrigger>
-                </Select>
-                </div>
-                <div className="grid w-full md:w-1/4 gap-2">
-                <Label htmlFor="price">Price</Label>
-                <Input
-                    id="price"
-                    type="number"
-                    placeholder="Enter price"
-                    disabled
-                />
-                </div>
-                <div className="flex w-full md:w-auto self-end gap-2">
-                <Button className="flex-1 md:flex-none" disabled>
-                    Sold
-                </Button>
-                <Button variant="outline" className="flex-1 md:flex-none" disabled>
-                    Unsold
-                </Button>
-                </div>
-            </CardFooter>
-          </>
-        ) : (
-          <>
-            <CardHeader>
-                <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col md:flex-row items-center gap-8">
-                <Avatar className="h-48 w-48 border-4 border-primary">
-                <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} />
-                <AvatarFallback className="text-6xl">
-                    <User />
-                </AvatarFallback>
-                </Avatar>
-                <div className="w-full space-y-3">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
-                    <p className="font-medium text-muted-foreground">Department</p>
-                    <p>{currentPlayer.department}</p>
-                    <p className="font-medium text-muted-foreground">Year</p>
-                    <p>{currentPlayer.year}</p>
-                    <p className="font-medium text-muted-foreground">Position</p>
-                    <p>{currentPlayer.player_position}</p>
-                </div>
-                </div>
-            </CardContent>
-            <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
-                <div className="grid w-full md:w-auto md:flex-1 gap-2">
-                <Label htmlFor="team">Team</Label>
-                <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                    <SelectTrigger id="team">
-                    <SelectValue placeholder="Select a team" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                </div>
-                <div className="grid w-full md:w-1/4 gap-2">
-                <Label htmlFor="price">Price</Label>
-                <Input
-                    id="price"
-                    type="number"
-                    placeholder="Enter price"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                />
-                </div>
-                <div className="flex w-full md:w-auto self-end gap-2">
-                <Button onClick={handleSold} className="flex-1 md:flex-none" disabled={isProcessing}>
-                    {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sold
-                </Button>
-                <Button onClick={handleUnsold} variant="outline" className="flex-1 md:flex-none" disabled={isProcessing}>
-                    Unsold
-                </Button>
-                </div>
-            </CardFooter>
-          </>
-        )}
-      </Card>
+      {renderAuctionContent()}
 
       <Card className="max-w-4xl mx-auto">
           <CardHeader>
