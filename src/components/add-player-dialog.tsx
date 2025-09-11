@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc, DocumentData } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,8 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -36,6 +37,7 @@ const playerSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
+  photo: z.any(),
 });
 
 type PlayerFormValues = z.infer<typeof playerSchema>;
@@ -58,18 +60,31 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
       year: "",
       department: "",
       player_position: "",
+      photo: undefined,
     },
   });
+
+  const photoRef = form.register("photo");
 
   const onSubmit = async (data: PlayerFormValues) => {
     setIsSaving(true);
     try {
+      let photoUrl = "";
+      const photoFile = data.photo?.[0];
+
+      if (photoFile) {
+        const storageRef = ref(storage, `player_photos/${Date.now()}_${photoFile.name}`);
+        const snapshot = await uploadBytes(storageRef, photoFile);
+        photoUrl = await getDownloadURL(snapshot.ref);
+      }
+      
       const docData = {
         name: data.name,
         contact: data.contact,
         year: data.year,
         department: data.department,
         player_position: data.player_position,
+        photoUrl: photoUrl,
       };
 
       const docRef = await addDoc(collection(db, "players"), docData);
@@ -165,6 +180,19 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
                   <FormLabel>Player Position</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="photo"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Player Photo</FormLabel>
+                  <FormControl>
+                    <Input type="file" {...photoRef} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
