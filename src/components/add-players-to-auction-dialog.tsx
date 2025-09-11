@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
@@ -43,10 +43,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
       const fetchPlayers = async () => {
         setLoading(true);
         try {
-          const playersQuery = query(
-            collection(db, "players"),
-            where("status", "==", "queued")
-          );
+          const playersQuery = query(collection(db, "players"));
           const playerSnapshot = await getDocs(playersQuery);
           const playersList = playerSnapshot.docs.map((doc) => ({
             id: doc.id,
