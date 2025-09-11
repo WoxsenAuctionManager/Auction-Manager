@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -19,13 +19,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2 } from "lucide-react";
+import { User, Loader2, Search } from "lucide-react";
 import type { Player } from "./players";
+import { Input } from "../ui/input";
 
 export function UnsoldPlayersPage() {
   const [unsoldPlayers, setUnsoldPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchUnsoldPlayers = async () => {
@@ -53,6 +55,12 @@ export function UnsoldPlayersPage() {
     fetchUnsoldPlayers();
   }, []);
 
+  const filteredPlayers = useMemo(() => {
+    return unsoldPlayers.filter((player) =>
+      player.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [unsoldPlayers, searchTerm]);
+
   return (
     <>
       <CardHeader className="px-0">
@@ -63,56 +71,71 @@ export function UnsoldPlayersPage() {
       </CardHeader>
 
       <Card>
+        <CardHeader>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by player name..."
+              className="w-full pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">Sno.</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead>Position</TableHead>
+                <TableHead>Photo</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Year</TableHead>
+                <TableHead>Player Position</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
+                  <TableCell colSpan={7} className="text-center h-24">
                      <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : error ? (
                  <TableRow>
-                  <TableCell colSpan={5} className="text-center text-destructive">
+                  <TableCell colSpan={7} className="text-center text-destructive">
                     {error}
                   </TableCell>
                 </TableRow>
-              ) : unsoldPlayers.length > 0 ? (
-                unsoldPlayers.map((player, index) => (
+              ) : filteredPlayers.length > 0 ? (
+                filteredPlayers.map((player, index) => (
                   <TableRow key={player.id}>
                     <TableCell>{index + 1}</TableCell>
-                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage
-                            src={player.photoUrl}
-                            alt={player.name}
-                          />
-                          <AvatarFallback>
-                            <User />
-                          </AvatarFallback>
-                        </Avatar>
-                        {player.name}
-                      </div>
+                    <TableCell>
+                      <Avatar>
+                        <AvatarImage
+                          src={player.photoUrl}
+                          alt={player.name}
+                        />
+                        <AvatarFallback>
+                          <User />
+                        </AvatarFallback>
+                      </Avatar>
                     </TableCell>
-                    <TableCell>{player.player_position}</TableCell>
+                    <TableCell className="font-medium">
+                        {player.name}
+                    </TableCell>
+                    <TableCell>{player.contact}</TableCell>
                     <TableCell>{player.department}</TableCell>
                     <TableCell>{player.year}</TableCell>
+                    <TableCell>{player.player_position}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={7} className="text-center">
                     No unsold players found.
                   </TableCell>
                 </TableRow>
