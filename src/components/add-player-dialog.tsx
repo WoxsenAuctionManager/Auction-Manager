@@ -72,12 +72,16 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded }: AddPlayer
       
       await uploadBytes(storageRef, photoFile);
       const photo_url = await getDownloadURL(storageRef);
+      
+      const { photo, ...playerData } = data;
 
-      const playerData = { ...data, photo_url, photo: undefined };
-      delete playerData.photo;
+      const docData = {
+        ...playerData,
+        photo_url,
+      };
 
-      const docRef = await addDoc(collection(db, "players"), playerData);
-      onPlayerAdded({ id: docRef.id, data: () => playerData });
+      const docRef = await addDoc(collection(db, "players"), docData);
+      onPlayerAdded({ id: docRef.id, ...docData });
       toast({
         title: "Player Added",
         description: `${data.name} has been successfully added.`,

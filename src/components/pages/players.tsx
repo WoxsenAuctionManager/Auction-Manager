@@ -82,8 +82,7 @@ export function PlayersPage() {
   }, []);
 
   const handlePlayerAdded = (newPlayer: DocumentData) => {
-    setPlayers((prevPlayers) => [...prevPlayers, { id: newPlayer.id, ...newPlayer.data() } as Player]);
-    fetchPlayers();
+    setPlayers((prevPlayers) => [...prevPlayers, newPlayer as Player]);
   };
 
   const filteredPlayers = useMemo(() => {
