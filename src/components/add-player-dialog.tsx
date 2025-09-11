@@ -41,8 +41,8 @@ import {
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   contact: z.string().min(10, { message: "Contact must be a valid number." }),
-  year: z.string().min(1, { message: "Year is required." }),
   department: z.string().min(2, { message: "Department is required." }),
+  year: z.string().min(1, { message: "Year is required." }),
   player_position: z.string().min(2, { message: "Player position is required." }),
   photoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
@@ -60,8 +60,8 @@ interface AddPlayerDialogProps {
 const defaultFormValues = {
   name: "",
   contact: "",
-  year: "",
   department: "",
+  year: "",
   player_position: "",
   photoUrl: "",
 };
@@ -81,8 +81,8 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
       form.reset({
         name: playerToEdit.name || "",
         contact: playerToEdit.contact || "",
-        year: playerToEdit.year || "",
         department: playerToEdit.department || "",
+        year: playerToEdit.year || "",
         player_position: playerToEdit.player_position || "",
         photoUrl: playerToEdit.photoUrl || "",
       });
@@ -199,9 +199,20 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Year</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a year" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1st Year">1st Year</SelectItem>
+                          <SelectItem value="2nd Year">2nd Year</SelectItem>
+                          <SelectItem value="3rd Year">3rd Year</SelectItem>
+                          <SelectItem value="4th Year">4th Year</SelectItem>
+                          <SelectItem value="NA">NA</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
