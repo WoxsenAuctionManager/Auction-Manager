@@ -28,8 +28,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import type { Player } from "./pages/players";
+import { Textarea } from "./ui/textarea";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -211,7 +211,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                     <FormItem>
                       <FormLabel>Player Photo URL</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://example.com/photo.jpg" {...field} />
+                        <Textarea placeholder="https://example.com/photo.jpg" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -220,17 +220,6 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
               </div>
             </ScrollArea>
             
-            <Card className="mt-4">
-              <CardHeader className="p-4">
-                <CardTitle className="text-lg">Debugger</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <pre className="text-xs overflow-auto">
-                  {JSON.stringify(form.watch(), null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSaving}>
