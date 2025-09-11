@@ -198,8 +198,8 @@ export function PlayersPage() {
                 <TableHead>Photo</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Contact</TableHead>
-                <TableHead>Year</TableHead>
                 <TableHead>Department</TableHead>
+                <TableHead>Year</TableHead>
                 <TableHead>Player Position</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -225,8 +225,8 @@ export function PlayersPage() {
                     </TableCell>
                     <TableCell className="font-medium">{player.name}</TableCell>
                     <TableCell>{player.contact}</TableCell>
-                    <TableCell>{player.year}</TableCell>
                     <TableCell>{player.department}</TableCell>
+                    <TableCell>{player.year}</TableCell>
                     <TableCell>{player.player_position}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
