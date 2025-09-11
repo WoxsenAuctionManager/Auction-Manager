@@ -60,13 +60,14 @@ import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string };
 
-interface LastAction {
+interface ActionRecord {
+  type: "sold" | "unsold";
   player: AuctionPlayer;
-  previousState: {
-    teamId?: string | null;
-    price?: number | null;
-  };
+  previousPlayerState: AuctionPlayer;
+  previousPlayers: AuctionPlayer[];
+  previousCurrentPlayerIndex: number;
 }
+
 
 export function AuctionPage() {
   const [allPlayers, setAllPlayers] = useState<AuctionPlayer[]>([]);
@@ -77,7 +78,7 @@ export function AuctionPage() {
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [lastAction, setLastAction] = useState<LastAction | null>(null);
+  const [actionHistory, setActionHistory] = useState<ActionRecord[]>([]);
   const [auctionStarted, setAuctionStarted] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
 
@@ -105,7 +106,7 @@ export function AuctionPage() {
       setTeams(teamsList);
       
       setCurrentPlayerIndex(0);
-      setLastAction(null);
+      setActionHistory([]);
       setAuctionStarted(false);
 
     } catch (error) {
@@ -152,6 +153,15 @@ export function AuctionPage() {
     if (!currentPlayer) return;
 
     setIsProcessing(true);
+
+    const newAction: ActionRecord = {
+      type: "sold",
+      player: currentPlayer,
+      previousPlayerState: { ...currentPlayer },
+      previousPlayers: [...players],
+      previousCurrentPlayerIndex: currentPlayerIndex,
+    };
+    
     try {
       const playerDocRef = doc(db, "players", currentPlayer.id);
       const soldData = {
@@ -159,15 +169,9 @@ export function AuctionPage() {
         price: Number(price),
       };
       await updateDoc(playerDocRef, soldData);
-      
-      setLastAction({
-        player: { ...currentPlayer, ...soldData },
-        previousState: {
-          teamId: currentPlayer.teamId || null,
-          price: currentPlayer.price || null,
-        },
-      });
 
+      setActionHistory(prev => [...prev, newAction]);
+      
       const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
       setPlayers(updatedPlayers);
       setAllPlayers(prevAll => prevAll.map(p => p.id === currentPlayer.id ? { ...p, ...soldData } : p));
@@ -201,13 +205,14 @@ export function AuctionPage() {
     const currentPlayer = players[currentPlayerIndex];
     if (!currentPlayer) return;
     
-    setLastAction({
+    const newAction: ActionRecord = {
+      type: "unsold",
       player: currentPlayer,
-      previousState: {
-        teamId: currentPlayer.teamId || null,
-        price: currentPlayer.price || null,
-      },
-    });
+      previousPlayerState: { ...currentPlayer },
+      previousPlayers: [...players],
+      previousCurrentPlayerIndex: currentPlayerIndex,
+    };
+    setActionHistory(prev => [...prev, newAction]);
 
     setCurrentPlayerIndex(prev => {
         if (prev + 1 >= players.length) {
@@ -224,6 +229,45 @@ export function AuctionPage() {
         title: "Player Unsold",
         description: `${currentPlayer.name} is unsold. Moving to the next player.`,
     });
+  };
+
+  const handleUndo = async () => {
+    if (actionHistory.length === 0) {
+      toast({ title: "No actions to undo." });
+      return;
+    }
+
+    setIsProcessing(true);
+    const lastAction = actionHistory[actionHistory.length - 1];
+
+    try {
+      if (lastAction.type === "sold") {
+        const playerDocRef = doc(db, "players", lastAction.player.id);
+        await updateDoc(playerDocRef, {
+          teamId: lastAction.previousPlayerState.teamId || null,
+          price: lastAction.previousPlayerState.price || null,
+        });
+      }
+
+      setPlayers(lastAction.previousPlayers);
+      setCurrentPlayerIndex(lastAction.previousCurrentPlayerIndex);
+      setAllPlayers(prevAll => prevAll.map(p => p.id === lastAction.player.id ? lastAction.previousPlayerState : p));
+
+      setActionHistory(prev => prev.slice(0, -1));
+      toast({
+        title: "Action Undone",
+        description: `The last action for ${lastAction.player.name} has been reverted.`,
+      });
+    } catch (error) {
+      console.error("Error undoing action:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to undo the last action. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleResetAuction = async () => {
@@ -409,7 +453,12 @@ export function AuctionPage() {
     <>
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="font-semibold text-3xl">Live Auction</h1>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleUndo} disabled={actionHistory.length === 0 || isProcessing}>
+                <ArrowLeft className="mr-2" /> Back
+            </Button>
+            <h1 className="font-semibold text-3xl">Live Auction</h1>
+        </div>
         <div className="flex gap-2">
             <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -488,3 +537,5 @@ export function AuctionPage() {
     </>
   );
 }
+
+    
