@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -116,7 +117,7 @@ export function CreateAuctionDialog({ open, onOpenChange, onAuctionCreated }: Cr
                   <FormItem>
                     <FormLabel>Auction Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="E.g., 'Season 1 Auction'" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
