@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 
@@ -24,6 +24,7 @@ interface AuctionSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialPurse: number;
+  initialSquadSize: number;
   onSettingsSaved: () => void;
 }
 
@@ -31,9 +32,11 @@ export function AuctionSettingsDialog({
   open,
   onOpenChange,
   initialPurse,
+  initialSquadSize,
   onSettingsSaved
 }: AuctionSettingsDialogProps) {
   const [purse, setPurse] = useState(String(initialPurse));
+  const [squadSize, setSquadSize] = useState(String(initialSquadSize));
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -41,8 +44,9 @@ export function AuctionSettingsDialog({
   useEffect(() => {
     if (open) {
       setPurse(String(initialPurse));
+      setSquadSize(String(initialSquadSize));
     }
-  }, [open, initialPurse]);
+  }, [open, initialPurse, initialSquadSize]);
 
   const handleSave = async () => {
     if (!user) {
@@ -57,11 +61,14 @@ export function AuctionSettingsDialog({
     setIsSaving(true);
     try {
       const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
-      await setDoc(settingsDocRef, { initialPurse: Number(purse) }, { merge: true });
+      await setDoc(settingsDocRef, { 
+        initialPurse: Number(purse),
+        squadSize: Number(squadSize),
+      }, { merge: true });
 
       toast({
         title: "Settings Saved",
-        description: "The initial purse has been successfully updated.",
+        description: "The auction settings have been successfully updated.",
       });
       
       onSettingsSaved();
@@ -91,7 +98,7 @@ export function AuctionSettingsDialog({
             Manage the configuration for your auction.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
+        <div className="py-4 space-y-4">
           <div className="grid gap-3">
             <Label htmlFor="initial-purse">Initial Purse of the Team</Label>
             <Input
@@ -99,6 +106,16 @@ export function AuctionSettingsDialog({
               type="number"
               value={purse}
               onChange={(e) => setPurse(e.target.value)}
+              disabled={isSaving}
+            />
+          </div>
+          <div className="grid gap-3">
+            <Label htmlFor="squad-size">Squad Size</Label>
+            <Input
+              id="squad-size"
+              type="number"
+              value={squadSize}
+              onChange={(e) => setSquadSize(e.target.value)}
               disabled={isSaving}
             />
           </div>
@@ -116,5 +133,3 @@ export function AuctionSettingsDialog({
     </Dialog>
   );
 }
-
-    

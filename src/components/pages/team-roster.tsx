@@ -9,7 +9,6 @@ import {
   where,
   doc,
   getDoc,
-  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
@@ -53,6 +52,7 @@ export function TeamRosterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [initialPurse, setInitialPurse] = useState<number>(0);
+  const [squadSize, setSquadSize] = useState<number>(0);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -69,10 +69,11 @@ export function TeamRosterPage() {
       // 1. Fetch auction settings
       const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
       const settingsSnap = await getDoc(settingsDocRef);
-      const currentInitialPurse = settingsSnap.exists()
-        ? Number(settingsSnap.data().initialPurse)
-        : 0;
+      const settingsData = settingsSnap.exists() ? settingsSnap.data() : {};
+      const currentInitialPurse = Number(settingsData.initialPurse) || 0;
+      const currentSquadSize = Number(settingsData.squadSize) || 0;
       setInitialPurse(currentInitialPurse);
+      setSquadSize(currentSquadSize);
 
       // 2. Fetch all teams for the user
       const teamsCollection = collection(db, "users", user.uid, "teams");
@@ -111,6 +112,11 @@ export function TeamRosterPage() {
       setError(
         "Failed to load team rosters. Please check your configuration and try again."
       );
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load team rosters.'
+      })
     } finally {
       setLoading(false);
     }
@@ -133,7 +139,7 @@ export function TeamRosterPage() {
     );
   }
 
-  if (error) {
+  if (error && !loading) {
     return (
       <Card>
         <CardHeader>
@@ -179,6 +185,10 @@ export function TeamRosterPage() {
                         </CardDescription>
                     </div>
                 </div>
+                 <div className="text-right">
+                    <p className="text-sm font-medium">Squad Size</p>
+                    <p className="text-sm text-muted-foreground">{team.roster.length} / {squadSize > 0 ? squadSize : 'N/A'}</p>
+                 </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -239,10 +249,9 @@ export function TeamRosterPage() {
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
         initialPurse={initialPurse}
+        initialSquadSize={squadSize}
         onSettingsSaved={handleSettingsSaved}
       />
     </>
   );
 }
-
-    
