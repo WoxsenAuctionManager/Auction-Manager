@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
@@ -66,11 +67,42 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
         }
     }, [actionHistory, auctionId]);
     
+    // Effect to reset state when auction changes
     useEffect(() => {
         setPlayers(getInitialState('players', []));
         setCurrentPlayerIndex(getInitialState('currentPlayerIndex', 0));
         setAuctionStarted(getInitialState('auctionStarted', false));
         setActionHistory(getInitialState('actionHistory', []));
+    }, [auctionId]);
+
+    // Effect to listen for changes in other tabs
+    useEffect(() => {
+        if (typeof window === 'undefined' || !auctionId) return;
+
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.storageArea !== localStorage) return;
+            
+            const keyMapping: { [key: string]: (value: any) => void } = {
+                [`auction_${auctionId}_players`]: setPlayers,
+                [`auction_${auctionId}_currentPlayerIndex`]: setCurrentPlayerIndex,
+                [`auction_${auctionId}_auctionStarted`]: setAuctionStarted,
+                [`auction_${auctionId}_actionHistory`]: setActionHistory,
+            };
+
+            if (event.key && event.key in keyMapping && event.newValue) {
+                try {
+                    const newValue = JSON.parse(event.newValue);
+                    keyMapping[event.key](newValue);
+                } catch (e) {
+                    console.error("Failed to parse localStorage value", e);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, [auctionId]);
 
 
