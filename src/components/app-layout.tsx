@@ -155,6 +155,7 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
 
 function NavLinks({ closeSheet }: { closeSheet: () => void }) {
   const pathname = usePathname();
+  const { selectedAuction } = useAuctionSelection();
 
   return (
     <>
@@ -168,19 +169,30 @@ function NavLinks({ closeSheet }: { closeSheet: () => void }) {
         <Home className="h-4 w-4" />
         All Auctions
       </Link>
-      {navLinks.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          onClick={closeSheet}
-          className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-            pathname === href ? "bg-muted text-primary" : "text-muted-foreground"
-          }`}
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </Link>
-      ))}
+      {navLinks.map(({ href, label, icon: Icon }) => {
+        const linkProps: any = {
+            key: href,
+            href: href,
+            className: `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                pathname === href ? "bg-muted text-primary" : "text-muted-foreground"
+            }`
+        };
+
+        if (href === '/live-preview' && selectedAuction) {
+            linkProps.href = `/live-preview?auctionId=${selectedAuction.id}`;
+            linkProps.target = "_blank";
+            linkProps.rel = "noopener noreferrer";
+        } else {
+             linkProps.onClick = closeSheet;
+        }
+
+        return (
+            <Link {...linkProps}>
+                <Icon className="h-4 w-4" />
+                {label}
+            </Link>
+        );
+      })}
     </>
   );
 }
