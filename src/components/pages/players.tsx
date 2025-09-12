@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2, XCircle, Rows } from "lucide-react";
+import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2, XCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -374,8 +374,8 @@ export function PlayersPage() {
                 Import Players
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setSelectionMode(true)} disabled={players.length === 0}>
-                <Rows className="mr-2 h-4 w-4" />
-                Bulk Edit
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remove Players
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
