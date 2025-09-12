@@ -34,7 +34,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -315,6 +315,23 @@ export function AuctionPage() {
     }
 };
 
+const movePlayer = (index: number, direction: 'up' | 'down') => {
+    setPlayers(currentPlayers => {
+        const newPlayers = [...currentPlayers];
+        const playerToMove = newPlayers[index];
+        const swapIndex = direction === 'up' ? index - 1 : index + 1;
+
+        if (swapIndex < 0 || swapIndex >= newPlayers.length) {
+            return newPlayers; // Out of bounds
+        }
+
+        newPlayers[index] = newPlayers[swapIndex];
+        newPlayers[swapIndex] = playerToMove;
+
+        return newPlayers;
+    });
+};
+
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   
@@ -511,11 +528,12 @@ export function AuctionPage() {
                           <TableHead>Photo</TableHead>
                           <TableHead>Name</TableHead>
                           <TableHead>Position</TableHead>
+                          <TableHead className="w-[120px] text-center">Actions</TableHead>
                       </TableRow>
                   </TableHeader>
                   <TableBody>
-                      {upcomingPlayers.length > 0 ? (
-                          upcomingPlayers.map((player, index) => (
+                      {players.length > 0 ? (
+                          players.map((player, index) => (
                               <TableRow key={player.id}>
                                   <TableCell>{index + 1}</TableCell>
                                   <TableCell>
@@ -526,11 +544,31 @@ export function AuctionPage() {
                                   </TableCell>
                                   <TableCell>{player.name}</TableCell>
                                   <TableCell>{player.player_position}</TableCell>
+                                  <TableCell className="text-center">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => movePlayer(index, 'up')}
+                                            disabled={index === 0}
+                                        >
+                                            <ArrowUp className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => movePlayer(index, 'down')}
+                                            disabled={index === players.length - 1}
+                                        >
+                                            <ArrowDown className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                  </TableCell>
                               </TableRow>
                           ))
                       ) : (
                         <TableRow>
-                            <TableCell colSpan={4} className="text-center">
+                            <TableCell colSpan={5} className="text-center">
                                 No upcoming players.
                             </TableCell>
                         </TableRow>
@@ -551,6 +589,8 @@ export function AuctionPage() {
 }
 
     
+    
+
     
 
     
