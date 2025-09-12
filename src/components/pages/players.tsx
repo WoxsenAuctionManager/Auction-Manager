@@ -44,8 +44,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2 } from "lucide-react";
+import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2, XCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,8 +75,10 @@ export function PlayersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [isImportPlayerDialogOpen, setIsImportPlayerDialogOpen] = useState(false);
   const [importedPlayers, setImportedPlayers] = useState<Omit<Player, 'id'>[]>([]);
@@ -151,6 +154,34 @@ export function PlayersPage() {
       setPlayerToDelete(null);
     }
   };
+
+  const handleBulkDelete = async () => {
+    if (selectedPlayers.length === 0 || !user) return;
+    try {
+      const batch = writeBatch(db);
+      selectedPlayers.forEach(playerId => {
+        const playerDocRef = doc(db, "users", user.uid, "players", playerId);
+        batch.delete(playerDocRef);
+      });
+      await batch.commit();
+
+      setPlayers(players.filter(p => !selectedPlayers.includes(p.id)));
+      toast({
+        title: `${selectedPlayers.length} Player(s) Deleted`,
+        description: `The selected players have been successfully deleted.`,
+      });
+    } catch (error) {
+      console.error("Error deleting documents: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete selected players. Please try again.",
+      });
+    } finally {
+      setIsBulkDeleteDialogOpen(false);
+      setSelectedPlayers([]);
+    }
+  };
   
   const handleDialogClose = () => {
     setIsAddPlayerDialogOpen(false);
@@ -182,7 +213,6 @@ export function PlayersPage() {
       };
       reader.readAsArrayBuffer(file);
     }
-     // Reset file input to allow re-uploading the same file
      if(fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -206,7 +236,7 @@ export function PlayersPage() {
         description: `${importedPlayers.length} players have been successfully imported.`,
       });
 
-      fetchPlayers(); // Re-fetch players to update the list
+      fetchPlayers();
       
     } catch (error) {
       console.error("Error importing players: ", error);
@@ -222,12 +252,29 @@ export function PlayersPage() {
     }
   };
 
-
   const filteredPlayers = useMemo(() => {
     return players.filter((player) =>
       player.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [players, searchTerm]);
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedPlayers(filteredPlayers.map(p => p.id));
+    } else {
+      setSelectedPlayers([]);
+    }
+  };
+
+  const handlePlayerSelect = (playerId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedPlayers(prev => [...prev, playerId]);
+    } else {
+      setSelectedPlayers(prev => prev.filter(id => id !== playerId));
+    }
+  };
+
+  const allFilteredSelected = selectedPlayers.length > 0 && filteredPlayers.every(p => selectedPlayers.includes(p.id))
 
   if (loading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /></div>
@@ -242,22 +289,36 @@ export function PlayersPage() {
             Browse and search for players in the league.
           </p>
         </div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept=".xlsx, .xls, .csv"
-        />
-        <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-          <Upload className="mr-2 h-4 w-4" /> Import Players
-        </Button>
-        <Button onClick={() => {
-          setPlayerToEdit(null);
-          setIsAddPlayerDialogOpen(true);
-        }}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Player
-        </Button>
+        {selectedPlayers.length > 0 ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{selectedPlayers.length} selected</span>
+            <Button variant="destructive" onClick={() => setIsBulkDeleteDialogOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </Button>
+             <Button variant="ghost" size="icon" onClick={() => setSelectedPlayers([])}>
+              <XCircle className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".xlsx, .xls, .csv"
+            />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="mr-2 h-4 w-4" /> Import Players
+            </Button>
+            <Button onClick={() => {
+              setPlayerToEdit(null);
+              setIsAddPlayerDialogOpen(true);
+            }}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Player
+            </Button>
+          </>
+        )}
       </div>
 
       <AddPlayerDialog
@@ -281,7 +342,6 @@ export function PlayersPage() {
         players={importedPlayers}
         isImporting={isImporting}
       />
-
 
       {error && (
         <Alert variant="destructive">
@@ -308,6 +368,13 @@ export function PlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox 
+                    checked={allFilteredSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead className="w-[80px]">Sno.</TableHead>
                 <TableHead>Photo</TableHead>
                 <TableHead>Name</TableHead>
@@ -321,15 +388,25 @@ export function PlayersPage() {
             <TableBody>
               {!user ? (
                 <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground">
                         Please log in to view players.
                     </TableCell>
                 </TableRow>
               ) : filteredPlayers.length > 0 ? (
                 filteredPlayers.map((player, index) => (
-                  <TableRow key={player.id} onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
-                    <TableCell>{index + 1}</TableCell>
+                  <TableRow 
+                    key={player.id} 
+                    data-state={selectedPlayers.includes(player.id) && "selected"}
+                  >
                     <TableCell>
+                      <Checkbox 
+                        checked={selectedPlayers.includes(player.id)}
+                        onCheckedChange={(checked) => handlePlayerSelect(player.id, !!checked)}
+                        aria-label={`Select ${player.name}`}
+                      />
+                    </TableCell>
+                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{index + 1}</TableCell>
+                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
                       <Avatar>
                         <AvatarImage src={player.photoUrl} alt={player.name} />
                         <AvatarFallback>
@@ -337,11 +414,11 @@ export function PlayersPage() {
                         </AvatarFallback>
                       </Avatar>
                     </TableCell>
-                    <TableCell className="font-medium">{player.name}</TableCell>
-                    <TableCell>{player.contact}</TableCell>
-                    <TableCell>{player.department}</TableCell>
-                    <TableCell>{player.year}</TableCell>
-                    <TableCell>{player.player_position}</TableCell>
+                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer font-medium">{player.name}</TableCell>
+                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.contact}</TableCell>
+                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.department}</TableCell>
+                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.year}</TableCell>
+                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.player_position}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -369,7 +446,7 @@ export function PlayersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
+                  <TableCell colSpan={9} className="text-center">
                     No players found.
                   </TableCell>
                 </TableRow>
@@ -391,6 +468,22 @@ export function PlayersPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete{" "}
+              <strong>{selectedPlayers.length}</strong> player(s) and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
