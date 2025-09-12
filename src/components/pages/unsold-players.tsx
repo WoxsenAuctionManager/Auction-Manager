@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2, Search, MoreHorizontal, Trash2, Trash } from "lucide-react";
+import { User, Loader2, Search, MoreHorizontal, Trash2, Trash, Download } from "lucide-react";
 import type { Player } from "./players";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -41,6 +41,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 
 export function UnsoldPlayersPage() {
   const [unsoldPlayers, setUnsoldPlayers] = useState<Player[]>([]);
@@ -144,6 +145,22 @@ export function UnsoldPlayersPage() {
     );
   }, [unsoldPlayers, searchTerm]);
 
+  const handleDownload = () => {
+    const worksheetData = filteredPlayers.map(player => ({
+      Name: player.name,
+      Contact: player.contact,
+      Department: player.department,
+      Year: player.year,
+      Position: player.player_position,
+      'Photo URL': player.photoUrl || ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Unsold Players");
+    XLSX.writeFile(workbook, "unsold-players.xlsx");
+  };
+
   return (
     <>
       <div className="flex items-center justify-between">
@@ -153,14 +170,24 @@ export function UnsoldPlayersPage() {
             A list of all players who were not sold in the auction.
           </p>
         </div>
-        <Button 
-          variant="destructive" 
-          onClick={() => setIsRemoveAllDialogOpen(true)}
-          disabled={unsoldPlayers.length === 0 || isProcessing}
-        >
-          <Trash className="mr-2 h-4 w-4" />
-          Remove All Players
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleDownload}
+            disabled={filteredPlayers.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Download List
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={() => setIsRemoveAllDialogOpen(true)}
+            disabled={unsoldPlayers.length === 0 || isProcessing}
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Remove All Players
+          </Button>
+        </div>
       </div>
 
       <Card>
