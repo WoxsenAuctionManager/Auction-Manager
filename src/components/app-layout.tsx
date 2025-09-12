@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -171,7 +172,6 @@ function NavLinks({ closeSheet }: { closeSheet: () => void }) {
       </Link>
       {navLinks.map(({ href, label, icon: Icon }) => {
         const linkProps: any = {
-            key: href,
             href: href,
             className: `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
                 pathname === href ? "bg-muted text-primary" : "text-muted-foreground"
@@ -187,7 +187,7 @@ function NavLinks({ closeSheet }: { closeSheet: () => void }) {
         }
 
         return (
-            <Link {...linkProps}>
+            <Link key={href} {...linkProps}>
                 <Icon className="h-4 w-4" />
                 {label}
             </Link>
@@ -196,3 +196,5 @@ function NavLinks({ closeSheet }: { closeSheet: () => void }) {
     </>
   );
 }
+
+    
