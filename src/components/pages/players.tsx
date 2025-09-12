@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2, XCircle } from "lucide-react";
+import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2, XCircle, Rows } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +82,7 @@ export function PlayersPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [isImportPlayerDialogOpen, setIsImportPlayerDialogOpen] = useState(false);
   const [importedPlayers, setImportedPlayers] = useState<Omit<Player, 'id'>[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -180,6 +181,7 @@ export function PlayersPage() {
     } finally {
       setIsBulkDeleteDialogOpen(false);
       setSelectedPlayers([]);
+      setSelectionMode(false);
     }
   };
   
@@ -274,7 +276,12 @@ export function PlayersPage() {
     }
   };
 
-  const allFilteredSelected = selectedPlayers.length > 0 && filteredPlayers.every(p => selectedPlayers.includes(p.id))
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedPlayers([]);
+  }
+
+  const allFilteredSelected = selectionMode && selectedPlayers.length > 0 && filteredPlayers.every(p => selectedPlayers.includes(p.id))
 
   if (loading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /></div>
@@ -289,14 +296,14 @@ export function PlayersPage() {
             Browse and search for players in the league.
           </p>
         </div>
-        {selectedPlayers.length > 0 ? (
+        {selectionMode ? (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">{selectedPlayers.length} selected</span>
-            <Button variant="destructive" onClick={() => setIsBulkDeleteDialogOpen(true)}>
+            <Button variant="destructive" onClick={() => setIsBulkDeleteDialogOpen(true)} disabled={selectedPlayers.length === 0}>
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </Button>
-             <Button variant="ghost" size="icon" onClick={() => setSelectedPlayers([])}>
-              <XCircle className="h-4 w-4" />
+             <Button variant="ghost" onClick={handleCancelSelection}>
+              <XCircle className="mr-2 h-4 w-4" /> Cancel
             </Button>
           </div>
         ) : (
@@ -310,6 +317,9 @@ export function PlayersPage() {
             />
             <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
               <Upload className="mr-2 h-4 w-4" /> Import Players
+            </Button>
+            <Button variant="outline" onClick={() => setSelectionMode(true)}>
+              <Rows className="mr-2 h-4 w-4" /> Bulk Edit
             </Button>
             <Button onClick={() => {
               setPlayerToEdit(null);
@@ -368,13 +378,15 @@ export function PlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">
-                  <Checkbox 
-                    checked={allFilteredSelected}
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Select all"
-                  />
-                </TableHead>
+                {selectionMode && (
+                  <TableHead className="w-[50px]">
+                    <Checkbox 
+                      checked={allFilteredSelected}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="w-[80px]">Sno.</TableHead>
                 <TableHead>Photo</TableHead>
                 <TableHead>Name</TableHead>
@@ -398,13 +410,15 @@ export function PlayersPage() {
                     key={player.id} 
                     data-state={selectedPlayers.includes(player.id) && "selected"}
                   >
-                    <TableCell>
-                      <Checkbox 
-                        checked={selectedPlayers.includes(player.id)}
-                        onCheckedChange={(checked) => handlePlayerSelect(player.id, !!checked)}
-                        aria-label={`Select ${player.name}`}
-                      />
-                    </TableCell>
+                    {selectionMode && (
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedPlayers.includes(player.id)}
+                          onCheckedChange={(checked) => handlePlayerSelect(player.id, !!checked)}
+                          aria-label={`Select ${player.name}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{index + 1}</TableCell>
                     <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
                       <Avatar>
