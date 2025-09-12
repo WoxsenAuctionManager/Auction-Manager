@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2, Home } from "lucide-react";
+import { Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2, Home, LayoutDashboard, Eye } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
@@ -22,10 +22,12 @@ import { auth } from "@/lib/firebase";
 import { useAuctionSelection } from "@/context/auction-selection-context";
 
 const navLinks = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/players", label: "Player's List", icon: Users },
   { href: "/teams", label: "Teams", icon: Shield },
   { href: "/team-roster", label: "Team Roster", icon: ClipboardList },
   { href: "/auction", label: "Auction", icon: Gavel },
+  { href: "/live-preview", label: "Live Preview", icon: Eye },
   { href: "/sold-players", label: "Sold Players", icon: FileCheck2 },
   { href: "/unsold-players", label: "Unsold Players", icon: FileX2 },
 ];
