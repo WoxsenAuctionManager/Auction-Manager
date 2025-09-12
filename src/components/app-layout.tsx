@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Cuboid, Users, Shield, Settings, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2 } from "lucide-react";
+import { Cuboid, Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
@@ -24,7 +24,6 @@ const navLinks = [
   { href: "/teams", label: "Teams", icon: Shield },
   { href: "/team-roster", label: "Team Roster", icon: ClipboardList },
   { href: "/auction", label: "Auction", icon: Gavel },
-  { href: "/auction-settings", label: "Auction Settings", icon: Settings },
   { href: "/sold-players", label: "Sold Players", icon: FileCheck2 },
   { href: "/unsold-players", label: "Unsold Players", icon: FileX2 },
 ];
