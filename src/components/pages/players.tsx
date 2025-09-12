@@ -52,6 +52,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import { AddPlayerDialog } from "../add-player-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -307,27 +308,12 @@ export function PlayersPage() {
             </Button>
           </div>
         ) : (
-          <>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".xlsx, .xls, .csv"
-            />
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="mr-2 h-4 w-4" /> Import Players
-            </Button>
-            <Button variant="outline" onClick={() => setSelectionMode(true)}>
-              <Rows className="mr-2 h-4 w-4" /> Bulk Edit
-            </Button>
             <Button onClick={() => {
               setPlayerToEdit(null);
               setIsAddPlayerDialogOpen(true);
             }}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add Player
             </Button>
-          </>
         )}
       </div>
 
@@ -362,8 +348,8 @@ export function PlayersPage() {
       )}
 
       <Card>
-        <CardHeader>
-          <div className="relative">
+        <CardHeader className="flex flex-row items-center gap-4">
+          <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -373,6 +359,32 @@ export function PlayersPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">More options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import Players
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setSelectionMode(true)}>
+                <Rows className="mr-2 h-4 w-4" />
+                Bulk Edit
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept=".xlsx, .xls, .csv"
+          />
         </CardHeader>
         <CardContent>
           <Table>
