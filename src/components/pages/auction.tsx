@@ -13,6 +13,7 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 import {
   Card,
@@ -79,14 +80,19 @@ export function AuctionPage() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
+  const { user } = useAuth();
 
 
   const { toast } = useToast();
 
   const fetchData = useCallback(async (loadPlayers: boolean = false) => {
+    if (!user) {
+        setLoading(false);
+        return;
+    }
     setLoading(true);
     try {
-        const teamsSnapshot = await getDocs(collection(db, "teams"));
+        const teamsSnapshot = await getDocs(collection(db, "users", user.uid, "teams"));
         const teamsList = teamsSnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
@@ -94,7 +100,7 @@ export function AuctionPage() {
         setTeams(teamsList);
 
         if (players.length === 0) { // Only fetch players if not already in context
-            const playersQuery = query(collection(db, "players"), where("status", "==", "queued"));
+            const playersQuery = query(collection(db, "users", user.uid, "players"), where("status", "==", "queued"));
             const playersSnapshot = await getDocs(playersQuery);
             const playersList = playersSnapshot.docs.map((doc) => ({
             id: doc.id,
@@ -113,15 +119,19 @@ export function AuctionPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast, setPlayers, players.length]);
+  }, [toast, user, setPlayers, players.length]);
 
   useEffect(() => {
-    if (teams.length === 0) {
-        fetchData();
+    if (user) {
+        if (teams.length === 0) {
+            fetchData();
+        } else {
+            setLoading(false);
+        }
     } else {
         setLoading(false);
     }
-  }, [fetchData, teams.length]);
+  }, [fetchData, teams.length, user]);
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
     const playersWithStatus = newPlayers.map(p => ({ ...p, status: 'queued' as const }));
@@ -133,6 +143,7 @@ export function AuctionPage() {
   };
 
   const handleSold = async () => {
+    if (!user) return;
     if (!selectedTeam || !price) {
       toast({
         variant: "destructive",
@@ -156,7 +167,7 @@ export function AuctionPage() {
     };
     
     try {
-      const playerDocRef = doc(db, "players", currentPlayer.id);
+      const playerDocRef = doc(db, "users", user.uid, "players", currentPlayer.id);
       const soldData = {
         teamId: selectedTeam,
         price: Number(price),
@@ -195,6 +206,7 @@ export function AuctionPage() {
   };
 
   const handleUnsold = async () => {
+    if (!user) return;
     const currentPlayer = players[currentPlayerIndex];
     if (!currentPlayer) return;
 
@@ -209,7 +221,7 @@ export function AuctionPage() {
     };
 
     try {
-        const playerDocRef = doc(db, "players", currentPlayer.id);
+        const playerDocRef = doc(db, "users", user.uid, "players", currentPlayer.id);
         await updateDoc(playerDocRef, { status: 'unsold' });
         
         setActionHistory(prev => [...prev, newAction]);
@@ -239,6 +251,7 @@ export function AuctionPage() {
   };
 
   const handleUndo = async () => {
+    if (!user) return;
     if (actionHistory.length === 0) {
       toast({ title: "No actions to undo." });
       return;
@@ -248,7 +261,7 @@ export function AuctionPage() {
     const lastAction = actionHistory[actionHistory.length - 1];
 
     try {
-      const playerDocRef = doc(db, "players", lastAction.player.id);
+      const playerDocRef = doc(db, "users", user.uid, "players", lastAction.player.id);
       if (lastAction.type === "sold") {
         await updateDoc(playerDocRef, {
           teamId: null,
@@ -280,15 +293,16 @@ export function AuctionPage() {
   };
 
   const handleResetAuction = async () => {
+    if (!user) return;
     setIsProcessing(true);
     try {
-        const playersRef = collection(db, "players");
+        const playersRef = collection(db, "users", user.uid, "players");
         const q = query(playersRef, where("status", "in", ["sold", "unsold"]));
         const querySnapshot = await getDocs(q);
         
         const batch = writeBatch(db);
         querySnapshot.forEach((playerDoc) => {
-            const docRef = doc(db, "players", playerDoc.id);
+            const docRef = doc(db, "users", user.uid, "players", playerDoc.id);
             batch.update(docRef, { teamId: null, price: null, status: 'queued' });
         });
         
@@ -502,7 +516,7 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
 
       <Card className="max-w-4xl mx-auto">
           <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Next Up Ahead</CardTitle>
+              <CardTitle>Next up Ahead</CardTitle>
               <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" /> Add Player
               </Button>
@@ -574,10 +588,3 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     </>
   );
 }
-
-    
-    
-
-    
-
-    

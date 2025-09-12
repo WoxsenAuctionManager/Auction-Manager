@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { collection, query, where, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import {
   Card,
   CardContent,
@@ -50,13 +51,19 @@ export function UnsoldPlayersPage() {
   const [isRemoveAllDialogOpen, setIsRemoveAllDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchUnsoldPlayers = async () => {
+      if (!user) {
+        setUnsoldPlayers([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
         const playersQuery = query(
-          collection(db, "players"),
+          collection(db, "users", user.uid, "players"),
           where("status", "==", "unsold")
         );
         const playerSnapshot = await getDocs(playersQuery);
@@ -75,13 +82,13 @@ export function UnsoldPlayersPage() {
 
   useEffect(() => {
     fetchUnsoldPlayers();
-  }, []);
+  }, [user]);
   
   const handleRemove = async () => {
-    if (!playerToRemove) return;
+    if (!playerToRemove || !user) return;
     setIsProcessing(true);
     try {
-      const playerDocRef = doc(db, "players", playerToRemove.id);
+      const playerDocRef = doc(db, "users", user.uid, "players", playerToRemove.id);
       await updateDoc(playerDocRef, { status: 'queued' });
 
       setUnsoldPlayers(players => players.filter(p => p.id !== playerToRemove.id));
@@ -103,11 +110,12 @@ export function UnsoldPlayersPage() {
   };
 
   const handleRemoveAll = async () => {
+    if (!user) return;
     setIsProcessing(true);
     try {
       const batch = writeBatch(db);
       unsoldPlayers.forEach(player => {
-        const playerDocRef = doc(db, "players", player.id);
+        const playerDocRef = doc(db, "users", user.uid, "players", player.id);
         batch.update(playerDocRef, { status: 'queued' });
       });
       await batch.commit();

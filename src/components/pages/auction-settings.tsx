@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import {
     Card,
     CardContent,
@@ -25,12 +26,17 @@ export function AuctionSettingsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchSettings = async () => {
+            if (!user) {
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             try {
-                const settingsDocRef = doc(db, "auction_settings", "config");
+                const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
                 const docSnap = await getDoc(settingsDocRef);
 
                 if (docSnap.exists()) {
@@ -52,12 +58,17 @@ export function AuctionSettingsPage() {
         };
 
         fetchSettings();
-    }, [toast]);
+    }, [toast, user]);
 
     const handleSave = async () => {
+        if (!user) {
+            toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to save settings." });
+            return;
+        }
+
         setIsSaving(true);
         try {
-            const settingsDocRef = doc(db, "auction_settings", "config");
+            const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
             await setDoc(settingsDocRef, {
                 initialPurse,
                 retentions,
@@ -102,6 +113,7 @@ export function AuctionSettingsPage() {
                                     type="number"
                                     value={initialPurse}
                                     onChange={(e) => setInitialPurse(e.target.value)}
+                                    disabled={!user}
                                 />
                             </div>
                             <div className="grid gap-3">
@@ -111,6 +123,7 @@ export function AuctionSettingsPage() {
                                     type="number"
                                     value={retentions}
                                     onChange={(e) => setRetentions(e.target.value)}
+                                    disabled={!user}
                                 />
                             </div>
                             <div className="grid gap-3">
@@ -120,13 +133,14 @@ export function AuctionSettingsPage() {
                                     type="number"
                                     value={retentionPrice}
                                     onChange={(e) => setRetentionPrice(e.target.value)}
+                                    disabled={!user}
                                 />
                             </div>
                         </form>
                     )}
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
-                    <Button onClick={handleSave} disabled={isSaving || loading}>
+                    <Button onClick={handleSave} disabled={isSaving || loading || !user}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save
                     </Button>

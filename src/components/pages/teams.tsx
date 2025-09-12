@@ -9,6 +9,7 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +35,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertCircle, PlusCircle, Trash2, Pencil, Shield, MoreHorizontal } from "lucide-react";
+import { AlertCircle, PlusCircle, Trash2, Pencil, Shield, MoreHorizontal, Loader2 } from "lucide-react";
 import { AddTeamDialog } from "../add-team-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -58,12 +59,18 @@ export function TeamsPage() {
     const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
     const [teamToEdit, setTeamToEdit] = useState<Team | null>(null);
     const { toast } = useToast();
+    const { user } = useAuth();
 
     const fetchTeams = async () => {
+        if (!user) {
+            setTeams([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         setError(null);
         try {
-            const teamsCollection = collection(db, "teams");
+            const teamsCollection = collection(db, "users", user.uid, "teams");
             const teamSnapshot = await getDocs(teamsCollection);
             const teamsList = teamSnapshot.docs.map((doc) => ({
                 id: doc.id,
@@ -82,7 +89,7 @@ export function TeamsPage() {
 
     useEffect(() => {
         fetchTeams();
-    }, []);
+    }, [user]);
 
     const handleTeamAdded = (newTeam: DocumentData) => {
         setTeams((prevTeams) => [...prevTeams, newTeam as Team]);
@@ -102,9 +109,9 @@ export function TeamsPage() {
     };
 
     const handleDelete = async () => {
-        if (!teamToDelete) return;
+        if (!teamToDelete || !user) return;
         try {
-            await deleteDoc(doc(db, "teams", teamToDelete.id));
+            await deleteDoc(doc(db, "users", user.uid, "teams", teamToDelete.id));
             setTeams(teams.filter((t) => t.id !== teamToDelete.id));
             toast({
                 title: "Team Deleted",
@@ -161,10 +168,16 @@ export function TeamsPage() {
             )}
 
             {loading ? (
-                <p>Loading teams...</p>
+                 <div className="flex h-full items-center justify-center pt-12"><Loader2 className="h-12 w-12 animate-spin" /></div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {teams.length > 0 ? (
+                    {!user ? (
+                        <Card className="col-span-full">
+                            <CardContent className="flex flex-col items-center justify-center p-12">
+                                <p className="text-muted-foreground">Please log in to view teams.</p>
+                            </CardContent>
+                        </Card>
+                    ) : teams.length > 0 ? (
                         teams.map((team) => (
                             <Card key={team.id} className="relative">
                                 <DropdownMenu>
@@ -202,7 +215,7 @@ export function TeamsPage() {
                             </Card>
                         ))
                     ) : (
-                        <Card>
+                        <Card className="col-span-full">
                           <CardContent className="flex flex-col items-center justify-center p-12">
                                 <p>No teams found. Add a new team to get started.</p>
                           </CardContent>

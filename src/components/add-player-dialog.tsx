@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { convertGoogleDriveUrl } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -70,6 +71,7 @@ const defaultFormValues = {
 export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpdated, playerToEdit }: AddPlayerDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const isEditMode = !!playerToEdit;
 
   const form = useForm<PlayerFormValues>({
@@ -103,6 +105,11 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
   }, [playerToEdit, isEditMode, form, open]);
 
   const onSubmit = async (data: PlayerFormValues) => {
+    if (!user) {
+        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to perform this action."});
+        return;
+    }
+
     setIsSaving(true);
     try {
       const docData = {
@@ -111,7 +118,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
       };
 
       if (isEditMode && playerToEdit) {
-        const playerDocRef = doc(db, "players", playerToEdit.id);
+        const playerDocRef = doc(db, "users", user.uid, "players", playerToEdit.id);
         await updateDoc(playerDocRef, docData);
         onPlayerUpdated({ id: playerToEdit.id, ...docData });
         toast({
@@ -119,7 +126,8 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
           description: `${docData.name} has been successfully updated.`,
         });
       } else {
-        const docRef = await addDoc(collection(db, "players"), {
+        const playersCollectionRef = collection(db, "users", user.uid, "players");
+        const docRef = await addDoc(playersCollectionRef, {
           ...docData,
           status: 'queued'
         });

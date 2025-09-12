@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, doc, updateDoc, getDocs, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +66,7 @@ export function EditSoldPlayerDialog({ open, onOpenChange, player, onPlayerUpdat
   const [isSaving, setIsSaving] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<EditSoldPlayerFormValues>({
     resolver: zodResolver(editSoldPlayerSchema),
@@ -76,8 +78,9 @@ export function EditSoldPlayerDialog({ open, onOpenChange, player, onPlayerUpdat
   
   useEffect(() => {
     const fetchTeams = async () => {
+        if (!user) return;
         try {
-            const teamsSnapshot = await getDocs(collection(db, "teams"));
+            const teamsSnapshot = await getDocs(collection(db, "users", user.uid, "teams"));
             const teamsList = teamsSnapshot.docs.map((doc) => ({
               id: doc.id,
               ...doc.data(),
@@ -99,18 +102,19 @@ export function EditSoldPlayerDialog({ open, onOpenChange, player, onPlayerUpdat
             price: player.price || 0,
         });
     }
-  }, [open, player, form, toast]);
+  }, [open, player, form, toast, user]);
 
   const onSubmit = async (data: EditSoldPlayerFormValues) => {
+    if (!user) return;
     setIsSaving(true);
     try {
-      const playerDocRef = doc(db, "players", player.id);
+      const playerDocRef = doc(db, "users", user.uid, "players", player.id);
       await updateDoc(playerDocRef, {
         teamId: data.teamId,
         price: data.price,
       });
 
-      const teamDocRef = doc(db, "teams", data.teamId);
+      const teamDocRef = doc(db, "users", user.uid, "teams", data.teamId);
       const teamDocSnap = await getDoc(teamDocRef);
       const teamData = teamDocSnap.data() as Team | undefined;
 

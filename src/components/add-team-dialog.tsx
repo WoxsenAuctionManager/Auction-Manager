@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc, doc, updateDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +54,7 @@ const defaultFormValues = {
 export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, teamToEdit }: AddTeamDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const isEditMode = !!teamToEdit;
 
   const form = useForm<TeamFormValues>({
@@ -72,6 +74,11 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
   }, [teamToEdit, isEditMode, form, open]);
 
   const onSubmit = async (data: TeamFormValues) => {
+    if (!user) {
+        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to perform this action."});
+        return;
+    }
+
     setIsSaving(true);
     try {
       const docData = {
@@ -80,7 +87,7 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
       };
 
       if (isEditMode && teamToEdit) {
-        const teamDocRef = doc(db, "teams", teamToEdit.id);
+        const teamDocRef = doc(db, "users", user.uid, "teams", teamToEdit.id);
         await updateDoc(teamDocRef, docData);
         onTeamUpdated({ id: teamToEdit.id, ...docData });
         toast({
@@ -88,7 +95,8 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
           description: `${docData.name} has been successfully updated.`,
         });
       } else {
-        const docRef = await addDoc(collection(db, "teams"), docData);
+        const teamsCollectionRef = collection(db, "users", user.uid, "teams");
+        const docRef = await addDoc(teamsCollectionRef, docData);
         onTeamAdded({ id: docRef.id, ...docData });
         toast({
           title: "Team Added",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import {
   Card,
   CardContent,
@@ -57,13 +58,19 @@ export function SoldPlayersPage() {
   const [playerToRemove, setPlayerToRemove] = useState<SoldPlayer | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchSoldPlayers = async () => {
+    if (!user) {
+        setSoldPlayers([]);
+        setLoading(false);
+        return;
+    }
     setLoading(true);
     setError(null);
     try {
       const playersQuery = query(
-        collection(db, "players"),
+        collection(db, "users", user.uid, "players"),
         where("status", "==", "sold")
       );
       const playerSnapshot = await getDocs(playersQuery);
@@ -75,7 +82,7 @@ export function SoldPlayersPage() {
       const playersWithTeamData = await Promise.all(
         playersList.map(async (player) => {
           if (player.teamId) {
-            const teamDocRef = doc(db, "teams", player.teamId);
+            const teamDocRef = doc(db, "users", user.uid, "teams", player.teamId);
             const teamDocSnap = await getDoc(teamDocRef);
             if (teamDocSnap.exists()) {
               const teamData = teamDocSnap.data() as Team;
@@ -101,7 +108,7 @@ export function SoldPlayersPage() {
 
   useEffect(() => {
     fetchSoldPlayers();
-  }, []);
+  }, [user]);
 
   const handlePlayerUpdated = (updatedPlayer: SoldPlayer) => {
     setSoldPlayers(prev => 
@@ -111,10 +118,10 @@ export function SoldPlayersPage() {
   };
   
   const handleRemove = async () => {
-    if (!playerToRemove) return;
+    if (!playerToRemove || !user) return;
     setIsProcessing(true);
     try {
-      const playerDocRef = doc(db, "players", playerToRemove.id);
+      const playerDocRef = doc(db, "users", user.uid, "players", playerToRemove.id);
       await updateDoc(playerDocRef, {
         status: 'queued',
         teamId: null,

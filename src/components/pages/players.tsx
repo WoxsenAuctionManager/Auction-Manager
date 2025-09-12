@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import * as XLSX from "xlsx";
 import { convertGoogleDriveUrl } from "@/lib/utils";
+import { useAuth } from "@/context/auth-context";
 
 import {
   AlertDialog,
@@ -44,7 +45,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload } from "lucide-react";
+import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,12 +82,18 @@ export function PlayersPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchPlayers = async () => {
+    if (!user) {
+      setPlayers([]);
+      setLoading(false);
+      return;
+    };
     setLoading(true);
     setError(null);
     try {
-      const playersCollection = collection(db, "players");
+      const playersCollection = collection(db, "users", user.uid, "players");
       const playerSnapshot = await getDocs(playersCollection);
       const playersList = playerSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -105,7 +112,7 @@ export function PlayersPage() {
 
   useEffect(() => {
     fetchPlayers();
-  }, []);
+  }, [user]);
 
   const handlePlayerAdded = (newPlayer: DocumentData) => {
     setPlayers((prevPlayers) => [...prevPlayers, newPlayer as Player]);
@@ -125,9 +132,9 @@ export function PlayersPage() {
   };
 
   const handleDelete = async () => {
-    if (!playerToDelete) return;
+    if (!playerToDelete || !user) return;
     try {
-      await deleteDoc(doc(db, "players", playerToDelete.id));
+      await deleteDoc(doc(db, "users", user.uid, "players", playerToDelete.id));
       setPlayers(players.filter((p) => p.id !== playerToDelete.id));
       toast({
         title: "Player Deleted",
@@ -182,11 +189,13 @@ export function PlayersPage() {
   };
 
   const handleConfirmImport = async () => {
+    if (!user) return;
     setIsImporting(true);
     try {
       const batch = writeBatch(db);
+      const playersCollectionRef = collection(db, "users", user.uid, "players");
       importedPlayers.forEach(player => {
-        const newPlayerRef = doc(collection(db, "players"));
+        const newPlayerRef = doc(playersCollectionRef);
         batch.set(newPlayerRef, { ...player, status: 'queued' });
       });
 
@@ -219,6 +228,10 @@ export function PlayersPage() {
       player.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [players, searchTerm]);
+
+  if (loading) {
+    return <div className="flex h-full items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /></div>
+  }
 
   return (
     <>
@@ -306,11 +319,11 @@ export function PlayersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {!user ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    Loading...
-                  </TableCell>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                        Please log in to view players.
+                    </TableCell>
                 </TableRow>
               ) : filteredPlayers.length > 0 ? (
                 filteredPlayers.map((player, index) => (

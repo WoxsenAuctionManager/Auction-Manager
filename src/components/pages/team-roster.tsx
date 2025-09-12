@@ -10,6 +10,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import {
   Card,
   CardContent,
@@ -45,21 +46,27 @@ export function TeamRosterPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchTeamRosters = async () => {
+      if (!user) {
+        setTeamsWithRosters([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
         // 1. Fetch auction settings
-        const settingsDocRef = doc(db, "auction_settings", "config");
+        const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
         const settingsSnap = await getDoc(settingsDocRef);
         const initialPurse = settingsSnap.exists()
           ? Number(settingsSnap.data().initialPurse)
           : 0;
 
-        // 2. Fetch all teams
-        const teamsCollection = collection(db, "teams");
+        // 2. Fetch all teams for the user
+        const teamsCollection = collection(db, "users", user.uid, "teams");
         const teamSnapshot = await getDocs(teamsCollection);
         const teamsList = teamSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -70,7 +77,7 @@ export function TeamRosterPage() {
         const teamsData = await Promise.all(
           teamsList.map(async (team) => {
             const playersQuery = query(
-              collection(db, "players"),
+              collection(db, "users", user.uid, "players"),
               where("teamId", "==", team.id)
             );
             const playerSnapshot = await getDocs(playersQuery);
@@ -101,7 +108,7 @@ export function TeamRosterPage() {
     };
 
     fetchTeamRosters();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
