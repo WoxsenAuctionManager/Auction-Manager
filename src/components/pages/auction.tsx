@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -36,7 +35,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2 } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -60,6 +59,7 @@ import {
 } from "@/components/ui/table";
 import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 import { useAuction } from "@/context/auction-context";
+import { ShareAuctionDialog } from "../share-auction-dialog";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string; status?: 'sold' | 'unsold' | 'queued' };
 
@@ -81,6 +81,7 @@ export function AuctionPage() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
 
@@ -497,6 +498,9 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
             <h1 className="font-semibold text-3xl">Live Auction</h1>
         </div>
         <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsShareDialogOpen(true)}>
+                <Share2 className="mr-2 h-4 w-4" /> Share
+            </Button>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" disabled={isProcessing}>
@@ -592,6 +596,13 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
         onPlayersAdded={handlePlayersAddedToAuction}
         playersInQueue={players}
     />
+    {selectedAuction && (
+        <ShareAuctionDialog
+            open={isShareDialogOpen}
+            onOpenChange={setIsShareDialogOpen}
+            auctionId={selectedAuction.id}
+        />
+    )}
     </>
   );
 }

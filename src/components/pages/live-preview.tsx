@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useAuction } from "@/context/auction-context";
 import {
   Card,
@@ -21,14 +21,36 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, PlayCircle } from "lucide-react";
+import { Loader2, User } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 export function LivePreviewPage() {
   const { players, currentPlayerIndex, auctionStarted } = useAuction();
+  const { setSelectedAuction } = useAuctionSelection();
+  const searchParams = useSearchParams();
+  const auctionId = searchParams.get('auctionId');
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  useEffect(() => {
+    if (auctionId && initialLoad) {
+      // The name doesn't matter for read-only view, only the ID.
+      setSelectedAuction({ id: auctionId, name: 'Live Auction' });
+      setInitialLoad(false);
+    }
+  }, [auctionId, setSelectedAuction, initialLoad]);
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
 
   const renderContent = () => {
+    if (initialLoad && auctionId) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin" />
+        </div>
+      )
+    }
+
     if (!auctionStarted) {
       return (
         <Card className="max-w-4xl mx-auto">

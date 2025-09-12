@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -41,9 +40,11 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      if (pathname !== '/live-preview') {
+        router.push('/login');
+      }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
   
   useEffect(() => {
     if (!loading && user && showNav && !selectedAuction && pathname !== '/') {
@@ -56,7 +57,11 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
     router.push('/login');
   };
 
-  if (loading || (showNav && !selectedAuction)) {
+  const shouldShowLoader = loading || (showNav && !selectedAuction && user);
+  const isPublicPreview = pathname === '/live-preview' && !user;
+
+
+  if (shouldShowLoader && !isPublicPreview) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin" />
@@ -116,12 +121,12 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
                 <div className="font-semibold text-lg">{selectedAuction.name}</div>
             )}
            </div>
-           <DropdownMenu>
+           {user && (
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
                   <Avatar>
                     <AvatarFallback>{user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
-
                   </Avatar>
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
@@ -138,6 +143,7 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+           )}
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           {children}
