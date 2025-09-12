@@ -320,7 +320,7 @@ export function AuctionPage() {
   
   const upcomingPlayers = useMemo(() => {
     if (!auctionStarted) {
-      return [];
+      return players;
     }
     if (!currentPlayer || players.length <= 1) {
       return [];
@@ -551,4 +551,6 @@ export function AuctionPage() {
 }
 
     
+    
+
     
