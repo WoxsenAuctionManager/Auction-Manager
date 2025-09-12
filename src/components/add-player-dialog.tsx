@@ -82,6 +82,8 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
   useEffect(() => {
     if (watchedDepartment === "Staff") {
       form.setValue("year", "NA", { shouldValidate: true });
+    } else if (watchedDepartment === "Student" && form.getValues("year") === "NA") {
+      form.setValue("year", "", { shouldValidate: true });
     }
   }, [watchedDepartment, form]);
 
@@ -222,7 +224,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                           <SelectItem value="2nd Year">2nd Year</SelectItem>
                           <SelectItem value="3rd Year">3rd Year</SelectItem>
                           <SelectItem value="4th Year">4th Year</SelectItem>
-                          <SelectItem value="NA">NA</SelectItem>
+                          {watchedDepartment !== 'Student' && <SelectItem value="NA">NA</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
