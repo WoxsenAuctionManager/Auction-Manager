@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,12 +27,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Shield, Loader2, Settings } from "lucide-react";
+import { User, Shield, Loader2, Settings, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { Team } from "./teams";
 import type { Player } from "./players";
 import { AuctionSettingsDialog } from "../auction-settings-dialog";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface RosterPlayer extends Player {
   price?: number;
@@ -131,6 +132,42 @@ export function TeamRosterPage() {
     fetchTeamRostersAndSettings();
   }
 
+  const handleDownload = () => {
+    const doc = new jsPDF();
+    let yPos = 15;
+    doc.setFontSize(18);
+    doc.text("Team Rosters", 14, yPos);
+    yPos += 10;
+
+    teamsWithRosters.forEach((team) => {
+      if (yPos > 260) {
+        doc.addPage();
+        yPos = 15;
+      }
+      doc.setFontSize(14);
+      doc.text(team.name, 14, yPos);
+      yPos += 7;
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Player Name', 'Position', 'Price']],
+        body: team.roster.map(player => [
+          player.name,
+          player.player_position,
+          `₹${player.price?.toLocaleString() || 'N/A'}`
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: [38, 115, 101] },
+        didDrawPage: (data) => {
+          yPos = data.cursor?.y ?? yPos;
+        }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    });
+
+    doc.save("team-rosters.pdf");
+  };
+
   if (loading && teamsWithRosters.length === 0) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -161,10 +198,20 @@ export function TeamRosterPage() {
             View and manage player assignments for each team.
           </p>
         </div>
-        <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
-            <Settings className="h-5 w-5" />
-            <span className="sr-only">Auction Settings</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDownload}
+              disabled={teamsWithRosters.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Rosters
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">Auction Settings</span>
+            </Button>
+        </div>
       </div>
 
       <div className="space-y-6 pt-4">
