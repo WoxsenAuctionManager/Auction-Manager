@@ -98,17 +98,6 @@ export function AuctionPage() {
             ...doc.data(),
         })) as Team[];
         setTeams(teamsList);
-
-        if (players.length === 0) { // Only fetch players if not already in context
-            const playersQuery = query(collection(db, "users", user.uid, "players"), where("status", "==", "queued"));
-            const playersSnapshot = await getDocs(playersQuery);
-            const playersList = playersSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            })) as AuctionPlayer[];
-            setPlayers(playersList);
-        }
-
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
@@ -119,7 +108,7 @@ export function AuctionPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast, user, setPlayers, players.length]);
+  }, [toast, user]);
 
   useEffect(() => {
     if (user) {
@@ -135,10 +124,25 @@ export function AuctionPage() {
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
     const playersWithStatus = newPlayers.map(p => ({ ...p, status: 'queued' as const }));
+    
     setPlayers(prevPlayers => {
         const combined = [...prevPlayers, ...playersWithStatus];
         const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p])).values());
         return uniquePlayers;
+    });
+
+    const batch = writeBatch(db);
+    newPlayers.forEach(player => {
+        const playerRef = doc(db, "users", user!.uid, "players", player.id);
+        batch.update(playerRef, { status: 'queued' });
+    });
+    batch.commit().catch(err => {
+        console.error("Failed to update player status to queued:", err);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not update player status in the database."
+        })
     });
   };
 
