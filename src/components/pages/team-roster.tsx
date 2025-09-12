@@ -140,13 +140,17 @@ export function TeamRosterPage() {
     yPos += 10;
 
     teamsWithRosters.forEach((team) => {
-      if (yPos > 260) {
+      if (yPos > 250) {
         doc.addPage();
         yPos = 15;
       }
       doc.setFontSize(14);
       doc.text(team.name, 14, yPos);
       yPos += 7;
+
+      doc.setFontSize(10);
+      doc.text(`Amount Remaining: ₹${team.remainingPurse.toLocaleString()}`, 14, yPos);
+      yPos += 10;
 
       autoTable(doc, {
         startY: yPos,
