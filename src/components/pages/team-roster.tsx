@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,7 +19,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from "@/components/ui/card";
 import {
   Table,
@@ -30,12 +30,11 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Shield, Loader2, Settings } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { Team } from "./teams";
 import type { Player } from "./players";
+import { AuctionSettingsDialog } from "../auction-settings-dialog";
 
 interface RosterPlayer extends Player {
   price?: number;
@@ -52,8 +51,9 @@ export function TeamRosterPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [initialPurse, setInitialPurse] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [initialPurse, setInitialPurse] = useState<number>(0);
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -72,7 +72,7 @@ export function TeamRosterPage() {
       const currentInitialPurse = settingsSnap.exists()
         ? Number(settingsSnap.data().initialPurse)
         : 0;
-      setInitialPurse(String(currentInitialPurse));
+      setInitialPurse(currentInitialPurse);
 
       // 2. Fetch all teams for the user
       const teamsCollection = collection(db, "users", user.uid, "teams");
@@ -120,42 +120,10 @@ export function TeamRosterPage() {
     fetchTeamRostersAndSettings();
   }, [user]);
 
-  const handleSaveSettings = async () => {
-    if (!user) {
-        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to save settings." });
-        return;
-    }
-
-    setIsSaving(true);
-    try {
-        const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
-        const settingsSnap = await getDoc(settingsDocRef);
-        const existingSettings = settingsSnap.exists() ? settingsSnap.data() : {};
-        
-        await setDoc(settingsDocRef, {
-            ...existingSettings,
-            initialPurse: initialPurse,
-        });
-
-        toast({
-            title: "Settings Saved",
-            description: "The initial purse has been successfully updated.",
-        });
-
-        // Refetch data to update remaining purses
-        fetchTeamRostersAndSettings();
-
-    } catch (error) {
-        console.error("Error saving settings: ", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to save settings. Please try again.",
-        });
-    } finally {
-        setIsSaving(false);
-    }
-};
+  const handleSettingsSaved = () => {
+    // Refetch data to update remaining purses and get the new initial purse value
+    fetchTeamRostersAndSettings();
+  }
 
   if (loading && teamsWithRosters.length === 0) {
     return (
@@ -180,43 +148,20 @@ export function TeamRosterPage() {
 
   return (
     <>
-      <CardHeader className="px-0 flex-row justify-between items-center">
+      <div className="flex justify-between items-center">
         <div>
-          <CardTitle>Team Roster</CardTitle>
-          <CardDescription>
+          <h1 className="font-semibold text-3xl">Team Roster</h1>
+          <p className="text-muted-foreground mt-1">
             View and manage player assignments for each team.
-          </CardDescription>
+          </p>
         </div>
-      </CardHeader>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
             <Settings className="h-5 w-5" />
-            Auction Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 max-w-sm">
-              <Label htmlFor="initial-purse">Initial Purse of the team</Label>
-              <Input
-                  id="initial-purse"
-                  type="number"
-                  value={initialPurse}
-                  onChange={(e) => setInitialPurse(e.target.value)}
-                  disabled={!user || loading}
-              />
-          </div>
-        </CardContent>
-        <CardFooter className="border-t px-6 py-4">
-            <Button onClick={handleSaveSettings} disabled={isSaving || loading || !user}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save
-            </Button>
-        </CardFooter>
-      </Card>
+            <span className="sr-only">Auction Settings</span>
+        </Button>
+      </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 pt-4">
         {teamsWithRosters.map((team) => (
           <Card key={team.id}>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -289,6 +234,15 @@ export function TeamRosterPage() {
             </Card>
         )}
       </div>
+
+      <AuctionSettingsDialog 
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        initialPurse={initialPurse}
+        onSettingsSaved={handleSettingsSaved}
+      />
     </>
   );
 }
+
+    
