@@ -464,7 +464,7 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
                         id="price"
                         type="number"
                         placeholder="Enter price"
-                        value={price || ''}
+                        value={price}
                         onChange={(e) => setPrice(e.target.value)}
                     />
                 </div>
@@ -592,3 +592,5 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     </>
   );
 }
+
+    
