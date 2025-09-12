@@ -41,7 +41,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 export function UnsoldPlayersPage() {
   const [unsoldPlayers, setUnsoldPlayers] = useState<Player[]>([]);
@@ -146,20 +148,22 @@ export function UnsoldPlayersPage() {
   }, [unsoldPlayers, searchTerm]);
 
   const handleDownload = () => {
-    const worksheetData = filteredPlayers.map(player => ({
-      Name: player.name,
-      Contact: player.contact,
-      Department: player.department,
-      Year: player.year,
-      Position: player.player_position,
-      'Photo URL': player.photoUrl || ''
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Unsold Players");
-    XLSX.writeFile(workbook, "unsold-players.xlsx");
+    const doc = new jsPDF();
+    doc.text("Unsold Players", 14, 16);
+    autoTable(doc, {
+      startY: 20,
+      head: [['Name', 'Contact', 'Department', 'Year', 'Position']],
+      body: filteredPlayers.map(player => [
+        player.name,
+        player.contact,
+        player.department,
+        player.year,
+        player.player_position,
+      ]),
+    });
+    doc.save("unsold-players.pdf");
   };
+
 
   return (
     <>
