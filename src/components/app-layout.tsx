@@ -69,38 +69,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
           <div className="mt-auto p-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="w-full justify-start">
-                  <Avatar className="mr-2 h-8 w-8">
-                    <AvatarFallback>{user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
-                  </Avatar>
-                  {user?.email}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>Settings</DropdownMenuItem>
-                <DropdownMenuItem disabled>Support</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* User profile section is now managed inside the main header for mobile and here for desktop */}
           </div>
         </div>
       </div>
       <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 md:hidden">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="outline"
                 size="icon"
-                className="shrink-0"
+                className="shrink-0 md:hidden"
               >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
@@ -113,15 +93,36 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <Image src="https://media.licdn.com/dms/image/v2/D560BAQEmIjs8n5hw1Q/company-logo_200_200/company-logo_200_200/0/1720779427192?e=2147483647&v=beta&t=lSVyFZGzp3ki99maXPsatRFX3TA79V-p9x7dD53KIRo" alt="WUSA Auctions" width={32} height={32} className="h-8 w-8" />
-                  <span className="sr-only">WUSA Auctions</span>
+                  <span className="">WUSA Auctions Manager</span>
                 </Link>
                 <NavLinks closeSheet={() => setIsSheetOpen(false)}/>
               </nav>
             </SheetContent>
           </Sheet>
-           <div className="flex items-center gap-2 font-semibold">
-             <span className="font-bold">WUSA Auctions Manager</span>
+           <div className="w-full flex-1">
+            {/* Can add search or other header elements here */}
            </div>
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                  <Avatar>
+                    <AvatarFallback>{user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>Settings</DropdownMenuItem>
+                <DropdownMenuItem disabled>Support</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           {children}
