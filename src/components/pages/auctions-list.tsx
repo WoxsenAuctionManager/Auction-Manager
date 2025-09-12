@@ -59,7 +59,6 @@ export function AuctionsListPage() {
     <>
       <div className="text-center mb-8">
           <h1 className="font-bold text-4xl tracking-tight">WUSA Auction Manager</h1>
-          <p className="text-muted-foreground mt-2">Your central hub for managing football auctions.</p>
       </div>
       
       <Card className="max-w-4xl mx-auto">
