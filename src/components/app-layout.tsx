@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Cuboid, Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2 } from "lucide-react";
+import { Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
@@ -58,7 +59,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Cuboid className="h-6 w-6 text-primary" />
+              <Image src="https://media.licdn.com/dms/image/v2/D560BAQEmIjs8n5hw1Q/company-logo_200_200/company-logo_200_200/0/1720779427192?e=2147483647&v=beta&t=lSVyFZGzp3ki99maXPsatRFX3TA79V-p9x7dD53KIRo" alt="WUSA Auctions Manager" width={24} height={24} className="h-6 w-6" />
               <span className="">WUSA Auctions Manager</span>
             </Link>
           </div>
@@ -111,7 +112,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   href="#"
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
-                  <Cuboid className="h-6 w-6 text-primary" />
+                  <Image src="https://media.licdn.com/dms/image/v2/D560BAQEmIjs8n5hw1Q/company-logo_200_200/company-logo_200_200/0/1720779427192?e=2147483647&v=beta&t=lSVyFZGzp3ki99maXPsatRFX3TA79V-p9x7dD53KIRo" alt="WUSA Auctions" width={24} height={24} className="h-6 w-6" />
                   <span className="sr-only">WUSA Auctions</span>
                 </Link>
                 <NavLinks closeSheet={() => setIsSheetOpen(false)}/>
