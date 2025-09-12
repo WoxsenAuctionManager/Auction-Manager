@@ -195,7 +195,7 @@ export function AuctionPage() {
         title: "Player Sold!",
         description: `${currentPlayer.name} has been sold to ${
           teams.find((t) => t.id === selectedTeam)?.name
-        } for ₹${price}.`,
+        } for ₹${Number(price).toLocaleString('en-IN')}.`,
       });
     } catch (error) {
       console.error("Error selling player:", error);

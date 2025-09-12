@@ -235,7 +235,7 @@ export function SoldPlayersPage() {
                           {player.teamName || 'N/A'}
                         </div>
                       </TableCell>
-                      <TableCell>&#8377;{player.price?.toLocaleString() || 'N/A'}</TableCell>
+                      <TableCell>&#8377;{player.price?.toLocaleString('en-IN') || 'N/A'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

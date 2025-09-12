@@ -149,7 +149,7 @@ export function TeamRosterPage() {
       yPos += 7;
 
       doc.setFontSize(10);
-      doc.text(`Amount Remaining: ₹${team.remainingPurse.toLocaleString()}`, 14, yPos);
+      doc.text(`Amount Remaining: ₹${team.remainingPurse.toLocaleString('en-IN')}`, 14, yPos);
       yPos += 10;
 
       autoTable(doc, {
@@ -158,7 +158,7 @@ export function TeamRosterPage() {
         body: team.roster.map(player => [
           player.name,
           player.player_position,
-          `₹${player.price?.toLocaleString() || 'N/A'}`
+          `₹${player.price?.toLocaleString('en-IN') || 'N/A'}`
         ]),
         theme: 'striped',
         headStyles: { fillColor: [38, 115, 101] },
@@ -232,7 +232,7 @@ export function TeamRosterPage() {
                     <div>
                         <CardTitle>{team.name}</CardTitle>
                         <CardDescription>
-                            Amount Remaining: &#8377;{team.remainingPurse.toLocaleString()}
+                            Amount Remaining: &#8377;{team.remainingPurse.toLocaleString('en-IN')}
                         </CardDescription>
                     </div>
                 </div>
@@ -272,7 +272,7 @@ export function TeamRosterPage() {
                           {player.name}
                         </TableCell>
                         <TableCell>{player.player_position}</TableCell>
-                        <TableCell>&#8377;{player.price?.toLocaleString() || 'N/A'}</TableCell>
+                        <TableCell>&#8377;{player.price?.toLocaleString('en-IN') || 'N/A'}</TableCell>
                       </TableRow>
                     ))
                   ) : (
