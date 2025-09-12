@@ -1,5 +1,10 @@
+import { AppLayout } from "@/components/app-layout";
 import { AuctionPage } from "@/components/pages/auction";
 
 export default function Auction() {
-  return <AuctionPage />;
+  return (
+    <AppLayout>
+      <AuctionPage />
+    </AppLayout>
+  );
 }

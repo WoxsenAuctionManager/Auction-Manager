@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,9 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Cuboid, Users, Shield, Settings, Menu, ClipboardList, Gavel, FileCheck2, FileX2 } from "lucide-react";
+import { Cuboid, Users, Shield, Settings, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/auth-context";
+import { auth } from "@/lib/firebase";
 
 const navLinks = [
   { href: "/", label: "Player's List", icon: Users },
@@ -29,6 +31,27 @@ const navLinks = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -50,18 +73,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" className="w-full justify-start">
                   <Avatar className="mr-2 h-8 w-8">
-                    <AvatarFallback>N</AvatarFallback>
+                    <AvatarFallback>{user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
-                  Profile
+                  {user?.email}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Support</DropdownMenuItem>
+                <DropdownMenuItem disabled>Settings</DropdownMenuItem>
+                <DropdownMenuItem disabled>Support</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
