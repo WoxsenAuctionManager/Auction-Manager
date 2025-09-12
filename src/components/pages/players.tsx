@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   collection,
   getDocs,
@@ -13,6 +13,7 @@ import { db } from "@/lib/firebase";
 import * as XLSX from "xlsx";
 import { convertGoogleDriveUrl } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 import {
   AlertDialog,
@@ -88,9 +89,10 @@ export function PlayersPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
 
-  const fetchPlayers = async () => {
-    if (!user) {
+  const fetchPlayers = useCallback(async () => {
+    if (!user || !selectedAuction) {
       setPlayers([]);
       setLoading(false);
       return;
@@ -98,7 +100,7 @@ export function PlayersPage() {
     setLoading(true);
     setError(null);
     try {
-      const playersCollection = collection(db, "users", user.uid, "players");
+      const playersCollection = collection(db, "users", user.uid, "auctions", selectedAuction.id, "players");
       const playerSnapshot = await getDocs(playersCollection);
       const playersList = playerSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -113,11 +115,11 @@ export function PlayersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, selectedAuction]);
 
   useEffect(() => {
     fetchPlayers();
-  }, [user]);
+  }, [fetchPlayers]);
 
   const handlePlayerAdded = (newPlayer: DocumentData) => {
     setPlayers((prevPlayers) => [...prevPlayers, newPlayer as Player]);
@@ -137,9 +139,9 @@ export function PlayersPage() {
   };
 
   const handleDelete = async () => {
-    if (!playerToDelete || !user) return;
+    if (!playerToDelete || !user || !selectedAuction) return;
     try {
-      await deleteDoc(doc(db, "users", user.uid, "players", playerToDelete.id));
+      await deleteDoc(doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerToDelete.id));
       setPlayers(players.filter((p) => p.id !== playerToDelete.id));
       toast({
         title: "Player Deleted",
@@ -158,11 +160,11 @@ export function PlayersPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (selectedPlayers.length === 0 || !user) return;
+    if (selectedPlayers.length === 0 || !user || !selectedAuction) return;
     try {
       const batch = writeBatch(db);
       selectedPlayers.forEach(playerId => {
-        const playerDocRef = doc(db, "users", user.uid, "players", playerId);
+        const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerId);
         batch.delete(playerDocRef);
       });
       await batch.commit();
@@ -222,11 +224,11 @@ export function PlayersPage() {
   };
 
   const handleConfirmImport = async () => {
-    if (!user) return;
+    if (!user || !selectedAuction) return;
     setIsImporting(true);
     try {
       const batch = writeBatch(db);
-      const playersCollectionRef = collection(db, "users", user.uid, "players");
+      const playersCollectionRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "players");
       importedPlayers.forEach(player => {
         const newPlayerRef = doc(playersCollectionRef);
         batch.set(newPlayerRef, { ...player, status: 'queued' });
@@ -371,7 +373,7 @@ export function PlayersPage() {
                 <Upload className="mr-2 h-4 w-4" />
                 Import Players
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setSelectionMode(true)}>
+              <DropdownMenuItem onSelect={() => setSelectionMode(true)} disabled={players.length === 0}>
                 <Rows className="mr-2 h-4 w-4" />
                 Bulk Edit
               </DropdownMenuItem>
@@ -472,7 +474,7 @@ export function PlayersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center">
+                  <TableCell colSpan={selectionMode ? 9: 8} className="text-center">
                     No players found.
                   </TableCell>
                 </TableRow>

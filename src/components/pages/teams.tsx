@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   collection,
   getDocs,
@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,10 +30,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertCircle, PlusCircle, Trash2, Pencil, Shield, MoreHorizontal, Loader2 } from "lucide-react";
@@ -60,9 +59,10 @@ export function TeamsPage() {
     const [teamToEdit, setTeamToEdit] = useState<Team | null>(null);
     const { toast } = useToast();
     const { user } = useAuth();
+    const { selectedAuction } = useAuctionSelection();
 
-    const fetchTeams = async () => {
-        if (!user) {
+    const fetchTeams = useCallback(async () => {
+        if (!user || !selectedAuction) {
             setTeams([]);
             setLoading(false);
             return;
@@ -70,7 +70,7 @@ export function TeamsPage() {
         setLoading(true);
         setError(null);
         try {
-            const teamsCollection = collection(db, "users", user.uid, "teams");
+            const teamsCollection = collection(db, "users", user.uid, "auctions", selectedAuction.id, "teams");
             const teamSnapshot = await getDocs(teamsCollection);
             const teamsList = teamSnapshot.docs.map((doc) => ({
                 id: doc.id,
@@ -85,11 +85,11 @@ export function TeamsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, selectedAuction]);
 
     useEffect(() => {
         fetchTeams();
-    }, [user]);
+    }, [fetchTeams]);
 
     const handleTeamAdded = (newTeam: DocumentData) => {
         setTeams((prevTeams) => [...prevTeams, newTeam as Team]);
@@ -109,9 +109,9 @@ export function TeamsPage() {
     };
 
     const handleDelete = async () => {
-        if (!teamToDelete || !user) return;
+        if (!teamToDelete || !user || !selectedAuction) return;
         try {
-            await deleteDoc(doc(db, "users", user.uid, "teams", teamToDelete.id));
+            await deleteDoc(doc(db, "users", user.uid, "auctions", selectedAuction.id, "teams", teamToDelete.id));
             setTeams(teams.filter((t) => t.id !== teamToDelete.id));
             toast({
                 title: "Team Deleted",

@@ -1,10 +1,10 @@
 import { AppLayout } from "@/components/app-layout";
-import { PlayersPage } from "@/components/pages/players";
+import { AuctionsListPage } from "@/components/pages/auctions-list";
 
 export default function Home() {
   return (
-    <AppLayout>
-      <PlayersPage />
+    <AppLayout showNav={false}>
+      <AuctionsListPage />
     </AppLayout>
   );
 }

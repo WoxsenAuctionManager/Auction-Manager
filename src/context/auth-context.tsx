@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuctionSelection } from './auction-selection-context';
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({ user: null, loading: true }
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { setSelectedAuction } = useAuctionSelection();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -23,13 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      if (user && (pathname === '/login' || pathname === '/signup')) {
-        router.push('/');
+      if (user) {
+        if (pathname === '/login' || pathname === '/signup') {
+            router.push('/');
+        }
+      } else {
+        setSelectedAuction(null);
       }
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, [router, pathname, setSelectedAuction]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

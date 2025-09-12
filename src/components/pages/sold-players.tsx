@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 import {
   Card,
   CardContent,
@@ -59,9 +60,10 @@ export function SoldPlayersPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
 
-  const fetchSoldPlayers = async () => {
-    if (!user) {
+  const fetchSoldPlayers = useCallback(async () => {
+    if (!user || !selectedAuction) {
         setSoldPlayers([]);
         setLoading(false);
         return;
@@ -70,7 +72,7 @@ export function SoldPlayersPage() {
     setError(null);
     try {
       const playersQuery = query(
-        collection(db, "users", user.uid, "players"),
+        collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"),
         where("status", "==", "sold")
       );
       const playerSnapshot = await getDocs(playersQuery);
@@ -82,7 +84,7 @@ export function SoldPlayersPage() {
       const playersWithTeamData = await Promise.all(
         playersList.map(async (player) => {
           if (player.teamId) {
-            const teamDocRef = doc(db, "users", user.uid, "teams", player.teamId);
+            const teamDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "teams", player.teamId);
             const teamDocSnap = await getDoc(teamDocRef);
             if (teamDocSnap.exists()) {
               const teamData = teamDocSnap.data() as Team;
@@ -104,11 +106,11 @@ export function SoldPlayersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, selectedAuction]);
 
   useEffect(() => {
     fetchSoldPlayers();
-  }, [user]);
+  }, [fetchSoldPlayers]);
 
   const handlePlayerUpdated = (updatedPlayer: SoldPlayer) => {
     setSoldPlayers(prev => 
@@ -118,10 +120,10 @@ export function SoldPlayersPage() {
   };
   
   const handleRemove = async () => {
-    if (!playerToRemove || !user) return;
+    if (!playerToRemove || !user || !selectedAuction) return;
     setIsProcessing(true);
     try {
-      const playerDocRef = doc(db, "users", user.uid, "players", playerToRemove.id);
+      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerToRemove.id);
       await updateDoc(playerDocRef, {
         status: 'queued',
         teamId: null,

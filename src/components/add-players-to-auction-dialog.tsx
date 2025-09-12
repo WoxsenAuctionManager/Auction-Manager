@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,13 +48,14 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
   const [positionFilter, setPositionFilter] = useState("all");
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
 
   useEffect(() => {
-    if (open && user) {
+    if (open && user && selectedAuction) {
       const fetchPlayers = async () => {
         setLoading(true);
         try {
-          const playersQuery = query(collection(db, "users", user.uid, "players"));
+          const playersQuery = query(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"));
           const playerSnapshot = await getDocs(playersQuery);
           const playersList = playerSnapshot.docs.map((doc) => ({
             id: doc.id,
@@ -79,7 +81,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
 
       fetchPlayers();
     }
-  }, [open, toast, playersInQueue, user]);
+  }, [open, toast, playersInQueue, user, selectedAuction]);
 
   const filteredPlayers = useMemo(() => {
     return allPlayers.filter((player) =>

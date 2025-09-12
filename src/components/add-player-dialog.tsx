@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import { convertGoogleDriveUrl } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -72,6 +73,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
   const isEditMode = !!playerToEdit;
 
   const form = useForm<PlayerFormValues>({
@@ -109,6 +111,10 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
         toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to perform this action."});
         return;
     }
+    if (!selectedAuction) {
+        toast({ variant: "destructive", title: "Auction Error", description: "No auction selected."});
+        return;
+    }
 
     setIsSaving(true);
     try {
@@ -118,7 +124,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
       };
 
       if (isEditMode && playerToEdit) {
-        const playerDocRef = doc(db, "users", user.uid, "players", playerToEdit.id);
+        const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerToEdit.id);
         await updateDoc(playerDocRef, docData);
         onPlayerUpdated({ id: playerToEdit.id, ...docData });
         toast({
@@ -126,7 +132,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
           description: `${docData.name} has been successfully updated.`,
         });
       } else {
-        const playersCollectionRef = collection(db, "users", user.uid, "players");
+        const playersCollectionRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "players");
         const docRef = await addDoc(playersCollectionRef, {
           ...docData,
           status: 'queued'

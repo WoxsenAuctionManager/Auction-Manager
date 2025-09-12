@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   collection,
   getDocs,
@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 import {
   Card,
   CardContent,
@@ -57,10 +58,11 @@ export function TeamRosterPage() {
   const [squadSize, setSquadSize] = useState<number>(0);
 
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
   const { toast } = useToast();
 
-  const fetchTeamRostersAndSettings = async () => {
-    if (!user) {
+  const fetchTeamRostersAndSettings = useCallback(async () => {
+    if (!user || !selectedAuction) {
       setTeamsWithRosters([]);
       setLoading(false);
       return;
@@ -69,7 +71,7 @@ export function TeamRosterPage() {
     setError(null);
     try {
       // 1. Fetch auction settings
-      const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
+      const settingsDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "auction_settings", "config");
       const settingsSnap = await getDoc(settingsDocRef);
       const settingsData = settingsSnap.exists() ? settingsSnap.data() : {};
       const currentInitialPurse = Number(settingsData.initialPurse) || 0;
@@ -78,7 +80,7 @@ export function TeamRosterPage() {
       setSquadSize(currentSquadSize);
 
       // 2. Fetch all teams for the user
-      const teamsCollection = collection(db, "users", user.uid, "teams");
+      const teamsCollection = collection(db, "users", user.uid, "auctions", selectedAuction.id, "teams");
       const teamSnapshot = await getDocs(teamsCollection);
       const teamsList = teamSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -89,7 +91,7 @@ export function TeamRosterPage() {
       const teamsData = await Promise.all(
         teamsList.map(async (team) => {
           const playersQuery = query(
-            collection(db, "users", user.uid, "players"),
+            collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"),
             where("teamId", "==", team.id)
           );
           const playerSnapshot = await getDocs(playersQuery);
@@ -122,14 +124,13 @@ export function TeamRosterPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, selectedAuction, toast]);
   
   useEffect(() => {
     fetchTeamRostersAndSettings();
-  }, [user]);
+  }, [fetchTeamRostersAndSettings]);
 
   const handleSettingsSaved = () => {
-    // Refetch data to update remaining purses and get the new initial purse value
     fetchTeamRostersAndSettings();
   }
 
@@ -137,7 +138,7 @@ export function TeamRosterPage() {
     const doc = new jsPDF();
     let yPos = 15;
     doc.setFontSize(18);
-    doc.text("Team Rosters", 14, yPos);
+    doc.text(`Team Rosters - ${selectedAuction?.name || 'Auction'}`, 14, yPos);
     yPos += 10;
 
     teamsWithRosters.forEach((team) => {
@@ -150,7 +151,7 @@ export function TeamRosterPage() {
       yPos += 7;
 
       doc.setFontSize(10);
-      doc.text(`Amount Remaining: ${team.remainingPurse.toLocaleString('en-IN')}`, 14, yPos);
+      doc.text(`Amount Remaining: ${team.remainingPurse.toLocaleString()}`, 14, yPos);
       yPos += 10;
 
       autoTable(doc, {
@@ -159,7 +160,7 @@ export function TeamRosterPage() {
         body: team.roster.map(player => [
           player.name,
           player.player_position,
-          player.price?.toLocaleString('en-IN') || 'N/A'
+          player.price?.toLocaleString() || 'N/A'
         ]),
         theme: 'striped',
         headStyles: { fillColor: [38, 115, 101] },
@@ -170,7 +171,7 @@ export function TeamRosterPage() {
       yPos = (doc as any).lastAutoTable.finalY + 15;
     });
 
-    doc.save("team-rosters.pdf");
+    doc.save(`${selectedAuction?.name || 'team'}-rosters.pdf`);
   };
 
   if (loading && teamsWithRosters.length === 0) {

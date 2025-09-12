@@ -43,7 +43,7 @@ export function ImportPlayersDialog({
           <DialogTitle>Confirm Player Import</DialogTitle>
           <DialogDescription>
             Review the players below. Click "Confirm Import" to add them to the
-            database.
+            database for the current auction.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-[60vh] border rounded-md">

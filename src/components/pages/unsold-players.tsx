@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { collection, query, where, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -55,9 +53,10 @@ export function UnsoldPlayersPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
 
-  const fetchUnsoldPlayers = async () => {
-      if (!user) {
+  const fetchUnsoldPlayers = useCallback(async () => {
+      if (!user || !selectedAuction) {
         setUnsoldPlayers([]);
         setLoading(false);
         return;
@@ -66,7 +65,7 @@ export function UnsoldPlayersPage() {
       setError(null);
       try {
         const playersQuery = query(
-          collection(db, "users", user.uid, "players"),
+          collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"),
           where("status", "==", "unsold")
         );
         const playerSnapshot = await getDocs(playersQuery);
@@ -81,17 +80,17 @@ export function UnsoldPlayersPage() {
       } finally {
         setLoading(false);
       }
-    };
+    }, [user, selectedAuction]);
 
   useEffect(() => {
     fetchUnsoldPlayers();
-  }, [user]);
+  }, [fetchUnsoldPlayers]);
   
   const handleRemove = async () => {
-    if (!playerToRemove || !user) return;
+    if (!playerToRemove || !user || !selectedAuction) return;
     setIsProcessing(true);
     try {
-      const playerDocRef = doc(db, "users", user.uid, "players", playerToRemove.id);
+      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerToRemove.id);
       await updateDoc(playerDocRef, { status: 'queued' });
 
       setUnsoldPlayers(players => players.filter(p => p.id !== playerToRemove.id));
@@ -113,12 +112,12 @@ export function UnsoldPlayersPage() {
   };
 
   const handleRemoveAll = async () => {
-    if (!user) return;
+    if (!user || !selectedAuction) return;
     setIsProcessing(true);
     try {
       const batch = writeBatch(db);
       unsoldPlayers.forEach(player => {
-        const playerDocRef = doc(db, "users", user.uid, "players", player.id);
+        const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", player.id);
         batch.update(playerDocRef, { status: 'queued' });
       });
       await batch.commit();

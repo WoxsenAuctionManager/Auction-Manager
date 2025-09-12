@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,7 @@ export function AuctionSettingsDialog({
   const [squadSize, setSquadSize] = useState(String(initialSquadSize));
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,10 +59,18 @@ export function AuctionSettingsDialog({
       });
       return;
     }
+    if (!selectedAuction) {
+        toast({
+          variant: "destructive",
+          title: "Auction Error",
+          description: "No auction selected.",
+        });
+        return;
+    }
 
     setIsSaving(true);
     try {
-      const settingsDocRef = doc(db, "users", user.uid, "auction_settings", "config");
+      const settingsDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "auction_settings", "config");
       await setDoc(settingsDocRef, { 
         initialPurse: Number(purse),
         squadSize: Number(squadSize),

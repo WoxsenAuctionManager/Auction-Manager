@@ -7,6 +7,7 @@ import * as z from "zod";
 import { collection, addDoc, doc, updateDoc, DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +56,7 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
   const isEditMode = !!teamToEdit;
 
   const form = useForm<TeamFormValues>({
@@ -78,6 +80,10 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
         toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to perform this action."});
         return;
     }
+    if (!selectedAuction) {
+        toast({ variant: "destructive", title: "Auction Error", description: "No auction selected."});
+        return;
+    }
 
     setIsSaving(true);
     try {
@@ -87,7 +93,7 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
       };
 
       if (isEditMode && teamToEdit) {
-        const teamDocRef = doc(db, "users", user.uid, "teams", teamToEdit.id);
+        const teamDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "teams", teamToEdit.id);
         await updateDoc(teamDocRef, docData);
         onTeamUpdated({ id: teamToEdit.id, ...docData });
         toast({
@@ -95,7 +101,7 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
           description: `${docData.name} has been successfully updated.`,
         });
       } else {
-        const teamsCollectionRef = collection(db, "users", user.uid, "teams");
+        const teamsCollectionRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "teams");
         const docRef = await addDoc(teamsCollectionRef, docData);
         onTeamAdded({ id: docRef.id, ...docData });
         toast({

@@ -7,6 +7,7 @@ import * as z from "zod";
 import { collection, doc, updateDoc, getDocs, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +68,7 @@ export function EditSoldPlayerDialog({ open, onOpenChange, player, onPlayerUpdat
   const [teams, setTeams] = useState<Team[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedAuction } = useAuctionSelection();
 
   const form = useForm<EditSoldPlayerFormValues>({
     resolver: zodResolver(editSoldPlayerSchema),
@@ -78,9 +80,9 @@ export function EditSoldPlayerDialog({ open, onOpenChange, player, onPlayerUpdat
   
   useEffect(() => {
     const fetchTeams = async () => {
-        if (!user) return;
+        if (!user || !selectedAuction) return;
         try {
-            const teamsSnapshot = await getDocs(collection(db, "users", user.uid, "teams"));
+            const teamsSnapshot = await getDocs(collection(db, "users", user.uid, "auctions", selectedAuction.id, "teams"));
             const teamsList = teamsSnapshot.docs.map((doc) => ({
               id: doc.id,
               ...doc.data(),
@@ -102,19 +104,19 @@ export function EditSoldPlayerDialog({ open, onOpenChange, player, onPlayerUpdat
             price: player.price || 0,
         });
     }
-  }, [open, player, form, toast, user]);
+  }, [open, player, form, toast, user, selectedAuction]);
 
   const onSubmit = async (data: EditSoldPlayerFormValues) => {
-    if (!user) return;
+    if (!user || !selectedAuction) return;
     setIsSaving(true);
     try {
-      const playerDocRef = doc(db, "users", user.uid, "players", player.id);
+      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", player.id);
       await updateDoc(playerDocRef, {
         teamId: data.teamId,
         price: data.price,
       });
 
-      const teamDocRef = doc(db, "users", user.uid, "teams", data.teamId);
+      const teamDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "teams", data.teamId);
       const teamDocSnap = await getDoc(teamDocRef);
       const teamData = teamDocSnap.data() as Team | undefined;
 
