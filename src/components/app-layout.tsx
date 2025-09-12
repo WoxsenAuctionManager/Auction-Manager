@@ -59,7 +59,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Image src="https://media.licdn.com/dms/image/v2/D560BAQEmIjs8n5hw1Q/company-logo_200_200/company-logo_200_200/0/1720779427192?e=2147483647&v=beta&t=lSVyFZGzp3ki99maXPsatRFX3TA79V-p9x7dD53KIRo" alt="WUSA Auctions Manager" width={24} height={24} className="h-6 w-6" />
+              <Image src="https://media.licdn.com/dms/image/v2/D560BAQEmIjs8n5hw1Q/company-logo_200_200/company-logo_200_200/0/1720779427192?e=2147483647&v=beta&t=lSVyFZGzp3ki99maXPsatRFX3TA79V-p9x7dD53KIRo" alt="WUSA Auctions Manager" width={32} height={32} className="h-8 w-8" />
               <span className="">WUSA Auctions Manager</span>
             </Link>
           </div>
@@ -112,7 +112,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   href="#"
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
-                  <Image src="https://media.licdn.com/dms/image/v2/D560BAQEmIjs8n5hw1Q/company-logo_200_200/company-logo_200_200/0/1720779427192?e=2147483647&v=beta&t=lSVyFZGzp3ki99maXPsatRFX3TA79V-p9x7dD53KIRo" alt="WUSA Auctions" width={24} height={24} className="h-6 w-6" />
+                  <Image src="https://media.licdn.com/dms/image/v2/D560BAQEmIjs8n5hw1Q/company-logo_200_200/company-logo_200_200/0/1720779427192?e=2147483647&v=beta&t=lSVyFZGzp3ki99maXPsatRFX3TA79V-p9x7dD53KIRo" alt="WUSA Auctions" width={32} height={32} className="h-8 w-8" />
                   <span className="sr-only">WUSA Auctions</span>
                 </Link>
                 <NavLinks closeSheet={() => setIsSheetOpen(false)}/>
