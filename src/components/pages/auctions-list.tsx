@@ -57,48 +57,55 @@ export function AuctionsListPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div>
-            <h1 className="font-semibold text-3xl">My Auctions</h1>
-            <p className="text-muted-foreground mt-1">Select an auction to manage or create a new one.</p>
-        </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Start a New Auction
-        </Button>
+      <div className="text-center mb-8">
+          <h1 className="font-bold text-4xl tracking-tight">WUSA Auction Manager</h1>
+          <p className="text-muted-foreground mt-2">Your central hub for managing football auctions.</p>
       </div>
+      
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+              <CardTitle>My Auctions</CardTitle>
+              <CardDescription className="mt-1">Select an auction to manage or create a new one.</CardDescription>
+          </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Start a New Auction
+          </Button>
+        </CardHeader>
 
-      <div className="pt-6">
-        {loading ? (
-          <div className="flex justify-center items-center h-48">
-            <Loader2 className="h-12 w-12 animate-spin" />
-          </div>
-        ) : auctions.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {auctions.map((auction) => (
-              <Card 
-                key={auction.id}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleAuctionSelect(auction)}
-              >
-                <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                    <Gavel className="h-8 w-8 text-primary" />
-                    <CardTitle className="text-xl">{auction.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">Click to open and manage this auction.</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="col-span-full">
-            <CardContent className="flex flex-col items-center justify-center p-12">
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+            </div>
+          ) : auctions.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {auctions.map((auction) => (
+                <Card 
+                  key={auction.id}
+                  className="hover:shadow-md transition-shadow cursor-pointer group"
+                  onClick={() => handleAuctionSelect(auction)}
+                >
+                  <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                      <div className="bg-primary/10 p-3 rounded-full">
+                        <Gavel className="h-6 w-6 text-primary group-hover:animate-swing" />
+                      </div>
+                      <CardTitle className="text-lg">{auction.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <p className="text-sm text-muted-foreground">Click to open and manage this auction.</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <p className="text-lg font-medium text-muted-foreground">No auctions found.</p>
                 <p className="text-sm text-muted-foreground mt-2">Get started by creating your first auction.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <CreateAuctionDialog
         open={isCreateDialogOpen}

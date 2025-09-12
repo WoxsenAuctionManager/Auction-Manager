@@ -88,10 +88,18 @@ export default {
             height: '0',
           },
         },
+        'swing': {
+          '15%': { transform: 'translateX(5px)' },
+          '30%': { transform: 'translateX(-5px)' },
+          '50%': { transform: 'translateX(3px)' },
+          '80%': { transform: 'translateX(-2px)' },
+          '100%': { transform: 'translateX(0)' }
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'swing': 'swing 1s ease 1',
       },
     },
   },
