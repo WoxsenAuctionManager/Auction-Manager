@@ -77,6 +77,14 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
     defaultValues: defaultFormValues,
   });
 
+  const watchedDepartment = form.watch("department");
+
+  useEffect(() => {
+    if (watchedDepartment === "Staff") {
+      form.setValue("year", "NA", { shouldValidate: true });
+    }
+  }, [watchedDepartment, form]);
+
   useEffect(() => {
     if (isEditMode && playerToEdit) {
       form.reset({
@@ -182,7 +190,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Department</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a department" />
@@ -203,7 +211,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Year</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={watchedDepartment === 'Staff'}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a year" />
@@ -227,7 +235,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Player Position</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a position" />
