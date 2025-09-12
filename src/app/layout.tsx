@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AppLayout } from '@/components/app-layout';
+import { AuctionProvider } from '@/context/auction-context';
 
 export const metadata: Metadata = {
   title: 'WUSA Auctions Manager',
@@ -21,9 +22,11 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased h-full">
-        <AppLayout>
-          {children}
-        </AppLayout>
+        <AuctionProvider>
+          <AppLayout>
+            {children}
+          </AppLayout>
+        </AuctionProvider>
         <Toaster />
       </body>
     </html>

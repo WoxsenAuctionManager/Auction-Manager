@@ -57,28 +57,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
+import { useAuction } from "@/context/auction-context";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string; status?: 'sold' | 'unsold' | 'queued' };
 
-interface ActionRecord {
-  type: "sold" | "unsold";
-  player: AuctionPlayer;
-  previousPlayerState: AuctionPlayer;
-  previousPlayers: AuctionPlayer[];
-  previousCurrentPlayerIndex: number;
-}
-
-
 export function AuctionPage() {
-  const [players, setPlayers] = useState<AuctionPlayer[]>([]);
+  const {
+    players,
+    setPlayers,
+    currentPlayerIndex,
+    setCurrentPlayerIndex,
+    auctionStarted,
+    setAuctionStarted,
+    actionHistory,
+    setActionHistory,
+  } = useAuction();
+  
   const [teams, setTeams] = useState<Team[]>([]);
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [selectedTeam, setSelectedTeam] = useState("");
   const [price, setPrice] = useState("");
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [actionHistory, setActionHistory] = useState<ActionRecord[]>([]);
-  const [auctionStarted, setAuctionStarted] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
 
 
@@ -87,28 +86,22 @@ export function AuctionPage() {
   const fetchData = useCallback(async (loadPlayers: boolean = false) => {
     setLoading(true);
     try {
-      if (loadPlayers) {
-        const playersQuery = query(collection(db, "players"), where("status", "==", "queued"));
-        const playersSnapshot = await getDocs(playersQuery);
-        const playersList = playersSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as AuctionPlayer[];
-        setPlayers(playersList);
-      } else {
-        setPlayers([]);
-      }
+        const teamsSnapshot = await getDocs(collection(db, "teams"));
+        const teamsList = teamsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        })) as Team[];
+        setTeams(teamsList);
 
-      const teamsSnapshot = await getDocs(collection(db, "teams"));
-      const teamsList = teamsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Team[];
-      setTeams(teamsList);
-      
-      setCurrentPlayerIndex(0);
-      setActionHistory([]);
-      setAuctionStarted(false);
+        if (players.length === 0) { // Only fetch players if not already in context
+            const playersQuery = query(collection(db, "players"), where("status", "==", "queued"));
+            const playersSnapshot = await getDocs(playersQuery);
+            const playersList = playersSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            })) as AuctionPlayer[];
+            setPlayers(playersList);
+        }
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -120,11 +113,15 @@ export function AuctionPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, setPlayers, players.length]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (teams.length === 0) {
+        fetchData();
+    } else {
+        setLoading(false);
+    }
+  }, [fetchData, teams.length]);
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
     const playersWithStatus = newPlayers.map(p => ({ ...p, status: 'queued' as const }));
@@ -150,8 +147,8 @@ export function AuctionPage() {
 
     setIsProcessing(true);
 
-    const newAction: ActionRecord = {
-      type: "sold",
+    const newAction = {
+      type: "sold" as const,
       player: currentPlayer,
       previousPlayerState: { ...currentPlayer },
       previousPlayers: [...players],
@@ -174,7 +171,7 @@ export function AuctionPage() {
       
       setSelectedTeam("");
       setPrice("");
-      if (currentPlayerIndex >= updatedPlayers.length) {
+      if (currentPlayerIndex >= updatedPlayers.length && updatedPlayers.length > 0) {
         setCurrentPlayerIndex(0); 
       }
 
@@ -203,8 +200,8 @@ export function AuctionPage() {
 
     setIsProcessing(true);
     
-    const newAction: ActionRecord = {
-      type: "unsold",
+    const newAction = {
+      type: "unsold" as const,
       player: currentPlayer,
       previousPlayerState: { ...currentPlayer },
       previousPlayers: [...players],
@@ -220,7 +217,7 @@ export function AuctionPage() {
         const updatedPlayers = players.filter(p => p.id !== currentPlayer.id);
         setPlayers(updatedPlayers);
         
-        if (currentPlayerIndex >= updatedPlayers.length) {
+        if (currentPlayerIndex >= updatedPlayers.length && updatedPlayers.length > 0) {
             setCurrentPlayerIndex(0);
         }
 
@@ -302,7 +299,11 @@ export function AuctionPage() {
             description: "The auction has been reset. All players are now available."
         });
         
-        await fetchData(false);
+        setPlayers([]);
+        setCurrentPlayerIndex(0);
+        setActionHistory([]);
+        setAuctionStarted(false);
+
     } catch (error) {
         console.error("Error resetting auction:", error);
         toast({
@@ -335,20 +336,6 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   
-  const upcomingPlayers = useMemo(() => {
-    if (!auctionStarted) {
-      return players;
-    }
-    if (!currentPlayer || players.length <= 1) {
-      return [];
-    }
-    const upcoming = [
-      ...players.slice(currentPlayerIndex + 1),
-      ...players.slice(0, currentPlayerIndex)
-    ];
-    return upcoming;
-  }, [players, currentPlayerIndex, currentPlayer, auctionStarted]);
-
 
   if (loading) {
     return (
