@@ -8,6 +8,7 @@ import { useAuctionSelection } from "@/context/auction-selection-context";
 import {
   Card,
   CardContent,
+  CardHeader,
 } from "@/components/ui/card";
 import {
   Table,
