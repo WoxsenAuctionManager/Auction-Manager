@@ -9,6 +9,10 @@ import {
   DocumentData,
   deleteDoc,
   setDoc,
+  getDoc,
+  query,
+  where,
+  getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
@@ -171,15 +175,40 @@ export function AuctionPage() {
 
     setIsProcessing(true);
 
-    const newAction = {
-      type: "sold" as const,
-      player: currentPlayer,
-      previousPlayerState: { ...currentPlayer },
-      previousPlayers: [...players],
-      previousCurrentPlayerIndex: currentPlayerIndex,
-    };
-    
     try {
+      // Fetch squad size
+      const settingsDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "auction_settings", "config");
+      const settingsSnap = await getDoc(settingsDocRef);
+      const squadSize = settingsSnap.exists() ? settingsSnap.data().squadSize : 0;
+
+      if (squadSize > 0) {
+        // Fetch current number of players in the team
+        const playersInTeamQuery = query(
+            collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players"),
+            where("teamId", "==", selectedTeam)
+        );
+        const teamPlayerCountSnapshot = await getCountFromServer(playersInTeamQuery);
+        const teamPlayerCount = teamPlayerCountSnapshot.data().count;
+
+        if (teamPlayerCount >= squadSize) {
+            toast({
+                variant: "destructive",
+                title: "Team Full",
+                description: `This team has already reached its squad limit of ${squadSize} players.`,
+            });
+            setIsProcessing(false);
+            return;
+        }
+      }
+
+      const newAction = {
+        type: "sold" as const,
+        player: currentPlayer,
+        previousPlayerState: { ...currentPlayer },
+        previousPlayers: [...players],
+        previousCurrentPlayerIndex: currentPlayerIndex,
+      };
+
       const batch = writeBatch(db);
       
       const soldData = {
@@ -206,7 +235,6 @@ export function AuctionPage() {
       if (currentPlayerIndex >= updatedPlayers.length && updatedPlayers.length > 0) {
         setCurrentPlayerIndex(0); 
       }
-
 
       toast({
         title: "Player Sold!",
