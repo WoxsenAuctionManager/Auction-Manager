@@ -36,7 +36,6 @@ import type { Player } from "./players";
 import { AuctionSettingsDialog } from "../auction-settings-dialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { convertGoogleDriveUrl } from "@/lib/utils";
 
 interface RosterPlayer extends Player {
   price?: number;
@@ -232,7 +231,7 @@ export function TeamRosterPage() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-12 w-12">
-                        <AvatarImage src={team.logoUrl ? convertGoogleDriveUrl(team.logoUrl) : undefined} alt={team.name} />
+                        <AvatarImage src={team.logoUrl} alt={team.name} />
                         <AvatarFallback>
                             <Shield />
                         </AvatarFallback>

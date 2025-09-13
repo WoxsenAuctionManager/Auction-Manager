@@ -43,7 +43,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { convertGoogleDriveUrl } from "@/lib/utils";
 
 export interface Team {
   id: string;
@@ -208,7 +207,7 @@ export function TeamsPage() {
                                 </DropdownMenu>
                                 <CardHeader className="items-center text-center pt-8">
                                     <Avatar className="h-24 w-24 mb-4">
-                                        <AvatarImage src={team.logoUrl ? convertGoogleDriveUrl(team.logoUrl) : undefined} alt={team.name} />
+                                        <AvatarImage src={team.logoUrl} alt={team.name} />
                                         <AvatarFallback><Shield /></AvatarFallback>
                                     </Avatar>
                                     <CardTitle>{team.name}</CardTitle>
