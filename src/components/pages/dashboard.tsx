@@ -8,6 +8,8 @@ import {
   query,
   orderBy,
   limit,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
@@ -22,17 +24,12 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Users, Shield, CheckCircle2, XCircle, Trophy } from "lucide-react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
 } from "recharts";
 import {
   Table,
@@ -49,7 +46,7 @@ interface DashboardData {
   soldPlayers: number;
   unsoldPlayers: number;
   teamsCount: number;
-  playersPerTeam: { name: string; players: number }[];
+  teamPurseData: { name: string; value: number }[];
   topBuys: { name: string; price: number; teamName: string; photoUrl?: string }[];
 }
 
@@ -73,18 +70,21 @@ export function DashboardPage() {
       const soldPlayersCol = collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players");
       const unsoldPlayersCol = collection(db, "users", user.uid, "auctions", selectedAuction.id, "unsold_players");
       const teamsCol = collection(db, "users", user.uid, "auctions", selectedAuction.id, "teams");
+      const settingsDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "auction_settings", "config");
 
-      // Get counts
+      // Get counts and data
       const [
         totalPlayersSnap,
         soldPlayersSnap,
         unsoldPlayersSnap,
         teamsSnap,
+        settingsSnap,
       ] = await Promise.all([
         getCountFromServer(playersCol),
         getDocs(soldPlayersCol),
         getCountFromServer(unsoldPlayersCol),
         getDocs(teamsCol),
+        getDoc(settingsDocRef),
       ]);
       
       const totalPlayers = totalPlayersSnap.data().count;
@@ -93,11 +93,14 @@ export function DashboardPage() {
       const unsoldPlayers = unsoldPlayersSnap.data().count;
       const teamsList = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const teamsCount = teamsList.length;
+      const initialPurse = settingsSnap.exists() ? (settingsSnap.data().initialPurse || 0) : 0;
 
-      // Players per team
-      const playersPerTeam = teamsList.map(team => {
-        const count = soldPlayersList.filter(p => p.teamId === team.id).length;
-        return { name: team.name, players: count };
+      // Team purse data
+      const teamPurseData = teamsList.map(team => {
+        const totalSpent = soldPlayersList
+          .filter(p => p.teamId === team.id)
+          .reduce((sum, p) => sum + (p.price || 0), 0);
+        return { name: team.name, value: initialPurse - totalSpent };
       });
 
       // Top 5 buys
@@ -117,7 +120,7 @@ export function DashboardPage() {
         soldPlayers,
         unsoldPlayers,
         teamsCount,
-        playersPerTeam,
+        teamPurseData,
         topBuys,
       });
 
@@ -206,26 +209,50 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-5">
-        <Card className="md:col-span-3">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
           <CardHeader>
-            <CardTitle>Players Per Team</CardTitle>
-            <CardDescription>Number of players acquired by each team so far.</CardDescription>
+            <CardTitle>Team Purse Status</CardTitle>
+            <CardDescription>Remaining purse for each team.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.playersPerTeam} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                <YAxis allowDecimals={false} />
-                <Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{backgroundColor: 'hsl(var(--background))'}}/>
+              <PieChart>
+                <Pie
+                  data={data.teamPurseData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    return (
+                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-semibold">
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
+                >
+                  {data.teamPurseData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                    contentStyle={{backgroundColor: 'hsl(var(--background))'}}
+                    formatter={(value: number, name: string) => [`₹${value.toLocaleString('en-IN')}`, name]}
+                />
                 <Legend />
-                <Bar dataKey="players" name="Players" fill="hsl(var(--primary))" />
-              </BarChart>
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="md:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Auction Status</CardTitle>
             <CardDescription>A breakdown of player auction statuses.</CardDescription>
