@@ -357,22 +357,25 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   
+  const livePreviewUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !selectedAuction) return '';
+    return `${window.location.origin}/live-preview?auctionId=${selectedAuction.id}`;
+  }, [selectedAuction]);
+
   const handleShare = () => {
-    if (!selectedAuction) return;
-    const url = `${window.location.origin}/live-preview?auctionId=${selectedAuction.id}`;
-    navigator.clipboard.writeText(url);
+    if (!livePreviewUrl) return;
+    navigator.clipboard.writeText(livePreviewUrl);
     toast({
         title: "Link Copied!",
         description: "Live auction link has been copied to your clipboard.",
     });
+    setIsPreviewOpen(true);
   };
   
   const handlePreview = () => {
-    if (!selectedAuction) return;
+    if (!livePreviewUrl) return;
     setIsPreviewOpen(true);
   }
-
-  const livePreviewUrl = selectedAuction ? `${window.location.origin}/live-preview?auctionId=${selectedAuction.id}` : '';
 
   if (loading) {
     return (
@@ -631,8 +634,3 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     </>
   );
 }
-
-    
-    
-
-    
