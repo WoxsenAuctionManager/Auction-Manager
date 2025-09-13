@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -216,14 +217,14 @@ export function DashboardPage() {
             <CardDescription>Remaining purse for each team.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
                   data={data.teamPurseData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={80}
+                  outerRadius={120}
                   fill="#8884d8"
                   dataKey="value"
                   nameKey="name"
@@ -258,14 +259,14 @@ export function DashboardPage() {
             <CardDescription>A breakdown of player auction statuses.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
                   data={auctionStatusData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={80}
+                  outerRadius={120}
                   fill="#8884d8"
                   dataKey="value"
                   nameKey="name"
@@ -342,3 +343,5 @@ export function DashboardPage() {
     </div>
   );
 }
+
+    
