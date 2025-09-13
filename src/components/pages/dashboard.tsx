@@ -47,7 +47,7 @@ interface DashboardData {
   soldPlayers: number;
   unsoldPlayers: number;
   teamsCount: number;
-  teamPurseData: { name: string; value: number }[];
+  teamData: { name: string; value: number; playerCount: number, remainingPurse: number }[];
   topBuys: { name: string; price: number; teamName: string; photoUrl?: string }[];
 }
 
@@ -101,12 +101,13 @@ export function DashboardPage() {
       const teamsCount = teamsList.length;
       const initialPurse = settingsSnap.exists() ? (settingsSnap.data().initialPurse || 0) : 0;
 
-      // Team purse data
-      const teamPurseData = teamsList.map(team => {
-        const totalSpent = soldPlayersList
-          .filter(p => p.teamId === team.id)
-          .reduce((sum, p) => sum + (p.price || 0), 0);
-        return { name: team.name, value: initialPurse - totalSpent };
+      // Team data for chart
+      const teamData = teamsList.map(team => {
+        const playersInTeam = soldPlayersList.filter(p => p.teamId === team.id);
+        const playerCount = playersInTeam.length;
+        const totalSpent = playersInTeam.reduce((sum, p) => sum + (p.price || 0), 0);
+        const remainingPurse = initialPurse - totalSpent;
+        return { name: team.name, value: playerCount, playerCount, remainingPurse };
       });
 
       // Top 5 buys
@@ -126,7 +127,7 @@ export function DashboardPage() {
         soldPlayers,
         unsoldPlayers,
         teamsCount,
-        teamPurseData,
+        teamData,
         topBuys,
       });
 
@@ -212,14 +213,14 @@ export function DashboardPage() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Team Purse Status</CardTitle>
-            <CardDescription>Remaining purse for each team.</CardDescription>
+            <CardTitle>Team Status</CardTitle>
+            <CardDescription>Number of players in each team.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
-                  data={data.teamPurseData}
+                  data={data.teamData}
                   cx="40%"
                   cy="50%"
                   labelLine={false}
@@ -227,25 +228,28 @@ export function DashboardPage() {
                   fill="#8884d8"
                   dataKey="value"
                   nameKey="name"
-                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
                     const RADIAN = Math.PI / 180;
                     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                     return (
-                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-semibold">
-                        {`${(percent * 100).toFixed(0)}%`}
+                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-sm font-bold">
+                        {value}
                       </text>
                     );
                   }}
                 >
-                  {data.teamPurseData.map((entry, index) => (
+                  {data.teamData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip 
                     contentStyle={{backgroundColor: 'hsl(var(--background))'}}
-                    formatter={(value: number, name: string) => [`₹${value.toLocaleString('en-IN')}`, name]}
+                    formatter={(value: number, name: string, props) => {
+                        const remainingPurse = props.payload.remainingPurse;
+                        return [`₹${remainingPurse.toLocaleString('en-IN')}`, name]
+                    }}
                 />
                 <Legend layout="vertical" verticalAlign="middle" align="right" />
               </PieChart>
@@ -304,7 +308,3 @@ export function DashboardPage() {
     </div>
   );
 }
-
-    
-
-    
