@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2, Home, LayoutDashboard, Eye } from "lucide-react";
+import { Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2, Home, LayoutDashboard } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
@@ -26,7 +26,6 @@ const navLinks = [
   { href: "/teams", label: "Teams", icon: Shield },
   { href: "/team-roster", label: "Team Roster", icon: ClipboardList },
   { href: "/auction", label: "Auction", icon: Gavel },
-  { href: "/live-preview", label: "Live Preview", icon: Eye },
   { href: "/sold-players", label: "Sold Players", icon: FileCheck2 },
   { href: "/unsold-players", label: "Unsold Players", icon: FileX2 },
 ];
@@ -172,18 +171,11 @@ function NavLinks({ closeSheet }: { closeSheet: () => void }) {
       {navLinks.map(({ href, label, icon: Icon }) => {
         const linkProps: any = {
             href: href,
+            onClick: closeSheet,
             className: `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
                 pathname === href ? "bg-muted text-primary" : "text-muted-foreground"
             }`
         };
-
-        if (href === '/live-preview' && selectedAuction) {
-            linkProps.href = `/live-preview?auctionId=${selectedAuction.id}`;
-            linkProps.target = "_blank";
-            linkProps.rel = "noopener noreferrer";
-        } else {
-             linkProps.onClick = closeSheet;
-        }
 
         return (
             <Link key={href} {...linkProps}>
