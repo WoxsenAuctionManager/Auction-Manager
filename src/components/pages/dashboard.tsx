@@ -215,7 +215,7 @@ export function DashboardPage() {
               <PieChart>
                 <Pie
                   data={data.teamPurseData}
-                  cx="50%"
+                  cx="40%"
                   cy="50%"
                   labelLine={false}
                   outerRadius={120}
@@ -242,7 +242,7 @@ export function DashboardPage() {
                     contentStyle={{backgroundColor: 'hsl(var(--background))'}}
                     formatter={(value: number, name: string) => [`₹${value.toLocaleString('en-IN')}`, name]}
                 />
-                <Legend />
+                <Legend layout="vertical" verticalAlign="middle" align="right" />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
