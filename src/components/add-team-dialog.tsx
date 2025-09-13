@@ -34,7 +34,7 @@ import { Textarea } from "./ui/textarea";
 
 const teamSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  logoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  logoUrl: z.string().optional().or(z.literal('')),
 });
 
 type TeamFormValues = z.infer<typeof teamSchema>;

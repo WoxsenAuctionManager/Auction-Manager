@@ -6,22 +6,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function convertGoogleDriveUrl(url: string): string {
-  if (!url || !url.includes('drive.google.com')) {
+  if (!url || typeof url !== 'string') {
     return url;
   }
 
-  const patterns = [
-    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
-    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
-  ];
+  // Regular expression to extract file ID from various Google Drive URL formats
+  const fileIdRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]+)/;
+  const match = url.match(fileIdRegex);
 
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match && match[1]) {
-      const fileId = match[1];
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
-    }
+  if (match && match[1]) {
+    const fileId = match[1];
+    return `https://drive.google.com/uc?export=view&id=${fileId}`;
   }
 
+  // Return the original URL if it doesn't match known Google Drive patterns
   return url;
 }
