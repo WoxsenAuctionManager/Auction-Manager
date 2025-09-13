@@ -35,7 +35,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Eye } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -49,12 +49,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -86,7 +80,6 @@ export function AuctionPage() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
 
@@ -384,25 +377,6 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   
-  const livePreviewUrl = useMemo(() => {
-    if (typeof window === 'undefined' || !selectedAuction) return '';
-    return `${window.location.origin}/live-preview?auctionId=${selectedAuction.id}`;
-  }, [selectedAuction]);
-
-  const handleShare = () => {
-    if (!livePreviewUrl) return;
-    navigator.clipboard.writeText(livePreviewUrl);
-    toast({
-        title: "Link Copied!",
-        description: "Live auction link has been copied to your clipboard.",
-    });
-  };
-  
-  const handlePreview = () => {
-    if (!livePreviewUrl) return;
-    setIsPreviewOpen(true);
-  }
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -542,12 +516,6 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
             <h1 className="font-semibold text-3xl">Live Auction</h1>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePreview}>
-              <Eye className="mr-2"/> Preview
-            </Button>
-            <Button variant="outline" onClick={handleShare}>
-              <Share2 className="mr-2"/> Share
-            </Button>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" disabled={isProcessing}>
@@ -643,20 +611,8 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
         onPlayersAdded={handlePlayersAddedToAuction}
         playersInQueue={players}
     />
-    <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-4xl h-[90vh]">
-            <DialogHeader>
-                <DialogTitle>Live Preview</DialogTitle>
-            </DialogHeader>
-            <div className="h-full">
-                <iframe
-                    src={livePreviewUrl}
-                    className="w-full h-full border-0"
-                    title="Live Auction Preview"
-                />
-            </div>
-        </DialogContent>
-    </Dialog>
     </>
   );
 }
+
+    
