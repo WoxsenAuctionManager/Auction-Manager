@@ -27,7 +27,7 @@ const navLinks = [
   { href: "/teams", label: "Teams", icon: Shield },
   { href: "/team-roster", label: "Team Roster", icon: ClipboardList },
   { href: "/auction", label: "Auction", icon: Gavel },
-  { href: "/live-preview", label: "Live Preview", icon: Eye },
+  // { href: "/live-preview", label: "Live Preview", icon: Eye },
   { href: "/sold-players", label: "Sold Players", icon: FileCheck2 },
   { href: "/unsold-players", label: "Unsold Players", icon: FileX2 },
 ];
@@ -196,5 +196,3 @@ function NavLinks({ closeSheet }: { closeSheet: () => void }) {
     </>
   );
 }
-
-    
