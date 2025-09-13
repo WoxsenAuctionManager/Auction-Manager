@@ -55,7 +55,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
       const fetchPlayers = async () => {
         setLoading(true);
         try {
-          const playersQuery = query(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"));
+          const playersQuery = query(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"), where("status", "==", "queued"));
           const playerSnapshot = await getDocs(playersQuery);
           const playersList = playerSnapshot.docs.map((doc) => ({
             id: doc.id,
@@ -63,7 +63,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
           })) as Player[];
 
           const playersInQueueIds = new Set(playersInQueue.map(p => p.id));
-          const availablePlayers = playersList.filter(p => !playersInQueueIds.has(p.id) && (p as any).status !== 'sold' && (p as any).status !== 'unsold');
+          const availablePlayers = playersList.filter(p => !playersInQueueIds.has(p.id));
           
           setAllPlayers(availablePlayers);
           setSelectedPlayers([]);
