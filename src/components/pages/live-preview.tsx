@@ -78,8 +78,10 @@ export function LivePreviewPage() {
             // in a public page. This won't fetch data, just set the ID.
             setSelectedAuction({ id: auctionId, name: 'Live Auction' });
             setLoading(false);
+        } else {
+            setLoading(false);
         }
-    }, [auctionId]);
+    }, [auctionId, setSelectedAuction]);
 
 
     if (loading) {
@@ -115,7 +117,7 @@ export function LivePreviewPage() {
       );
     }
 
-    if (!currentPlayer && players.length === 0) {
+    if (!currentPlayer && players.length === 0 && auctionStarted) {
       return (
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
