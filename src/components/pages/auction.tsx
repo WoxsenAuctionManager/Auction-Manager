@@ -319,6 +319,7 @@ export function AuctionPage() {
             description: "The auction has been reset. All players are now available."
         });
         
+        // This will now clear the state and localStorage via the context provider
         setPlayers([]);
         setCurrentPlayerIndex(0);
         setActionHistory([]);
@@ -632,4 +633,6 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
 }
 
     
+    
+
     
