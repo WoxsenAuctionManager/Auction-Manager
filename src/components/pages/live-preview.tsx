@@ -22,17 +22,19 @@ export function LivePreviewPage() {
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    if (auctionId && initialLoad) {
+    if (auctionId) {
       // The name doesn't matter for read-only view, only the ID.
       setSelectedAuction({ id: auctionId, name: 'Live Auction' });
       setInitialLoad(false);
+    } else {
+        setInitialLoad(false);
     }
-  }, [auctionId, setSelectedAuction, initialLoad]);
+  }, [auctionId, setSelectedAuction]);
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
 
   const renderContent = () => {
-    if (initialLoad && auctionId) {
+    if (initialLoad) {
       return (
         <div className="flex h-screen items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin" />
