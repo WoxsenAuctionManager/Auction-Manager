@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -50,6 +51,12 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -80,6 +87,7 @@ export function AuctionPage() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
 
@@ -360,9 +368,10 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
   
   const handlePreview = () => {
     if (!selectedAuction) return;
-    const url = `${window.location.origin}/live-preview?auctionId=${selectedAuction.id}`;
-    window.open(url, '_blank', 'width=600,height=800,resizable=yes,scrollbars=yes');
+    setIsPreviewOpen(true);
   }
+
+  const livePreviewUrl = selectedAuction ? `${window.location.origin}/live-preview?auctionId=${selectedAuction.id}` : '';
 
   if (loading) {
     return (
@@ -604,8 +613,23 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
         onPlayersAdded={handlePlayersAddedToAuction}
         playersInQueue={players}
     />
+    <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl h-[90vh]">
+            <DialogHeader>
+                <DialogTitle>Live Preview</DialogTitle>
+            </DialogHeader>
+            <div className="h-full">
+                <iframe
+                    src={livePreviewUrl}
+                    className="w-full h-full border-0"
+                    title="Live Auction Preview"
+                />
+            </div>
+        </DialogContent>
+    </Dialog>
     </>
   );
 }
 
+    
     
