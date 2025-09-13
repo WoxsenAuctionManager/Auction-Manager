@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -99,6 +98,17 @@ export function AuctionPage() {
             ...doc.data(),
         })) as Team[];
         setTeams(teamsList);
+        
+        // Also ensure players in queue are valid
+        const masterPlayersSnapshot = await getDocs(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"));
+        const masterPlayerIds = new Set(masterPlayersSnapshot.docs.map(doc => doc.id));
+
+        const existingPlayers = players.filter(p => masterPlayerIds.has(p.id));
+
+        if(existingPlayers.length !== players.length) {
+            setPlayers(existingPlayers);
+        }
+
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
@@ -109,19 +119,16 @@ export function AuctionPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast, user, selectedAuction]);
+  }, [toast, user, selectedAuction, players, setPlayers]);
 
   useEffect(() => {
     if (user && selectedAuction) {
-        if (teams.length === 0) {
-            fetchData();
-        } else {
-            setLoading(false);
-        }
+      fetchData();
     } else {
         setLoading(false);
     }
-  }, [fetchData, teams.length, user, selectedAuction]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, selectedAuction]);
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
     const playersWithStatus = newPlayers.map(p => ({ ...p }));
@@ -614,5 +621,3 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     </>
   );
 }
-
-    

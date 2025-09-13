@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -86,6 +85,10 @@ export function TeamRosterPage() {
         id: doc.id,
         ...doc.data(),
       })) as Team[];
+      
+      const masterPlayersSnapshot = await getDocs(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"));
+      const masterPlayerIds = new Set(masterPlayersSnapshot.docs.map(doc => doc.id));
+
 
       // 3. For each team, fetch players and calculate remaining purse
       const teamsData = await Promise.all(
@@ -95,10 +98,12 @@ export function TeamRosterPage() {
             where("teamId", "==", team.id)
           );
           const playerSnapshot = await getDocs(playersQuery);
-          const roster = playerSnapshot.docs.map((doc) => ({
+          const rosterWithInvalid = playerSnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           })) as RosterPlayer[];
+
+          const roster = rosterWithInvalid.filter(p => masterPlayerIds.has(p.id));
 
           const totalSpent = roster.reduce(
             (sum, player) => sum + (player.price || 0),

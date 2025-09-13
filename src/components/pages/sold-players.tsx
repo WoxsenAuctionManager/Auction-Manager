@@ -79,9 +79,14 @@ export function SoldPlayersPage() {
         id: doc.id,
         ...doc.data(),
       })) as SoldPlayer[];
+      
+      const masterPlayersSnapshot = await getDocs(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"));
+      const masterPlayerIds = new Set(masterPlayersSnapshot.docs.map(doc => doc.id));
+
+      const validSoldPlayers = playersList.filter(p => masterPlayerIds.has(p.id));
 
       const playersWithTeamData = await Promise.all(
-        playersList.map(async (player) => {
+        validSoldPlayers.map(async (player) => {
           if (player.teamId) {
             const teamDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "teams", player.teamId);
             const teamDocSnap = await getDoc(teamDocRef);

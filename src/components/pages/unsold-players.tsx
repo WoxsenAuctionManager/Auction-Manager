@@ -73,7 +73,13 @@ export function UnsoldPlayersPage() {
           id: doc.id,
           ...doc.data(),
         })) as Player[];
-        setUnsoldPlayers(playersList);
+
+        const masterPlayersSnapshot = await getDocs(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"));
+        const masterPlayerIds = new Set(masterPlayersSnapshot.docs.map(doc => doc.id));
+
+        const validUnsoldPlayers = playersList.filter(p => masterPlayerIds.has(p.id));
+
+        setUnsoldPlayers(validUnsoldPlayers);
       } catch (err) {
         console.error(err);
         setError("Failed to load unsold players.");
