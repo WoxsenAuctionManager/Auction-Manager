@@ -31,7 +31,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import type { Team } from "./pages/teams";
 import { Textarea } from "./ui/textarea";
-import { convertGoogleDriveUrl } from "@/lib/utils";
 
 const teamSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -90,7 +89,6 @@ export function AddTeamDialog({ open, onOpenChange, onTeamAdded, onTeamUpdated, 
     try {
       const docData = {
         ...data,
-        logoUrl: data.logoUrl ? convertGoogleDriveUrl(data.logoUrl) : "",
       };
 
       if (isEditMode && teamToEdit) {
