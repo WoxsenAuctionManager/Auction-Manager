@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuctionProvider } from '@/context/auction-context';
 import { AuthProvider } from '@/context/auth-context';
 import { AuctionSelectionProvider } from '@/context/auction-selection-context';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'WUSA Auctions Manager',
@@ -23,13 +24,15 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased h-full">
-        <AuctionSelectionProvider>
-          <AuthProvider>
-            <AuctionProvider>
-              {children}
-            </AuctionProvider>
-          </AuthProvider>
-        </AuctionSelectionProvider>
+        <Suspense>
+          <AuctionSelectionProvider>
+            <AuthProvider>
+              <AuctionProvider>
+                {children}
+              </AuctionProvider>
+            </AuthProvider>
+          </AuctionSelectionProvider>
+        </Suspense>
         <Toaster />
       </body>
     </html>
