@@ -10,17 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Label } from "@/components/ui/label";
 import { Loader2, User } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useAuctionSelection } from "@/context/auction-selection-context";
@@ -95,7 +85,7 @@ export function LivePreviewPage() {
         <CardHeader>
           <CardTitle className="text-center text-5xl font-bold tracking-tight">{currentPlayer.name}</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col md:flex-row items-center gap-8">
+        <CardContent className="flex flex-col md:flex-row items-center gap-8 pb-6">
           <Avatar className="h-64 w-64 border-8 border-primary/50 shadow-lg">
             <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} />
             <AvatarFallback className="text-8xl"><User /></AvatarFallback>
@@ -111,24 +101,6 @@ export function LivePreviewPage() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6 mt-4">
-            <div className="grid w-full md:w-auto md:flex-1 gap-2">
-                <Label htmlFor="team" className="text-base">Team</Label>
-                <Select disabled>
-                    <SelectTrigger id="team" className="text-lg py-6">
-                        <SelectValue placeholder="Team decision pending..." />
-                    </SelectTrigger>
-                </Select>
-            </div>
-            <div className="grid w-full md:w-1/4 gap-2">
-                <Label htmlFor="price" className="text-base">Price</Label>
-                <Input id="price" type="text" value="--" className="text-lg py-6 text-center font-bold" disabled />
-            </div>
-            <div className="flex w-full md:w-auto self-end gap-2">
-                <Button className="flex-1 md:flex-none text-lg py-6" disabled>Sold</Button>
-                <Button variant="outline" className="flex-1 md:flex-none text-lg py-6" disabled>Unsold</Button>
-            </div>
-        </CardFooter>
       </Card>
     );
   };
