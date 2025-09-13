@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { EditSoldPlayerDialog } from "../edit-sold-player-dialog";
+import { convertGoogleDriveUrl } from "@/lib/utils";
 
 interface SoldPlayer extends Player {
   price?: number;
@@ -235,7 +236,7 @@ export function SoldPlayersPage() {
                         <div className="flex items-center gap-3">
                           <Avatar className="h-6 w-6">
                               <AvatarImage
-                                  src={player.teamLogoUrl}
+                                  src={player.teamLogoUrl ? convertGoogleDriveUrl(player.teamLogoUrl) : undefined}
                                   alt={player.teamName}
                               />
                               <AvatarFallback>
