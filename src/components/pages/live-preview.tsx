@@ -79,7 +79,7 @@ export function LivePreviewPage() {
             setSelectedAuction({ id: auctionId, name: 'Live Auction' });
             setLoading(false);
         }
-    }, [auctionId, setSelectedAuction]);
+    }, [auctionId]);
 
 
     if (loading) {
