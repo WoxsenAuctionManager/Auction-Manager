@@ -6,11 +6,10 @@ import {
   collection,
   getDocs,
   doc,
-  updateDoc,
-  query,
-  where,
   writeBatch,
   DocumentData,
+  deleteDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
@@ -67,7 +66,7 @@ import {
 import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 import { useAuction } from "@/context/auction-context";
 
-type AuctionPlayer = Player & { price?: number; teamId?: string; status?: 'sold' | 'unsold' | 'queued' };
+type AuctionPlayer = Player & { price?: number; teamId?: string };
 
 export function AuctionPage() {
   const {
@@ -132,7 +131,7 @@ export function AuctionPage() {
   }, [fetchData, teams.length, user, selectedAuction]);
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
-    const playersWithStatus = newPlayers.map(p => ({ ...p, status: 'queued' as const }));
+    const playersWithStatus = newPlayers.map(p => ({ ...p }));
     
     setPlayers(prevPlayers => {
         const combined = [...prevPlayers, ...playersWithStatus];
@@ -143,15 +142,15 @@ export function AuctionPage() {
     if (!user || !selectedAuction) return;
     const batch = writeBatch(db);
     newPlayers.forEach(player => {
-        const playerRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", player.id);
-        batch.update(playerRef, { status: 'queued' });
+        const playerRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", player.id);
+        batch.set(playerRef, player);
     });
     batch.commit().catch(err => {
-        console.error("Failed to update player status to queued:", err);
+        console.error("Failed to add players to queue:", err);
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Could not update player status in the database."
+            description: "Could not add players to the database."
         })
     });
   };
@@ -181,13 +180,21 @@ export function AuctionPage() {
     };
     
     try {
-      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", currentPlayer.id);
+      const batch = writeBatch(db);
+      
       const soldData = {
+        ...currentPlayer,
         teamId: selectedTeam,
         price: Number(price),
-        status: 'sold' as const,
       };
-      await updateDoc(playerDocRef, soldData);
+
+      const sourceRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", currentPlayer.id);
+      const targetRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players", currentPlayer.id);
+
+      batch.delete(sourceRef);
+      batch.set(targetRef, soldData);
+      
+      await batch.commit();
 
       setActionHistory(prev => [...prev, newAction]);
       
@@ -235,8 +242,15 @@ export function AuctionPage() {
     };
 
     try {
-        const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", currentPlayer.id);
-        await updateDoc(playerDocRef, { status: 'unsold' });
+        const batch = writeBatch(db);
+
+        const sourceRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", currentPlayer.id);
+        const targetRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "unsold_players", currentPlayer.id);
+
+        batch.delete(sourceRef);
+        batch.set(targetRef, currentPlayer);
+
+        await batch.commit();
         
         setActionHistory(prev => [...prev, newAction]);
 
@@ -275,8 +289,22 @@ export function AuctionPage() {
     const lastAction = actionHistory[actionHistory.length - 1];
 
     try {
-      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", lastAction.player.id);
-      await updateDoc(playerDocRef, { status: 'queued' });
+      const batch = writeBatch(db);
+
+      let sourceCollection;
+      if (lastAction.type === 'sold') {
+        sourceCollection = "sold_players";
+      } else {
+        sourceCollection = "unsold_players";
+      }
+
+      const sourceRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, sourceCollection, lastAction.player.id);
+      const targetRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", lastAction.player.id);
+      
+      batch.delete(sourceRef);
+      batch.set(targetRef, lastAction.previousPlayerState);
+
+      await batch.commit();
 
       setPlayers(lastAction.previousPlayers);
       setCurrentPlayerIndex(lastAction.previousCurrentPlayerIndex);
@@ -302,16 +330,16 @@ export function AuctionPage() {
     if (!user || !selectedAuction) return;
     setIsProcessing(true);
     try {
-        const playersRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "players");
-        const q = query(playersRef, where("status", "in", ["sold", "unsold"]));
-        const querySnapshot = await getDocs(q);
-        
         const batch = writeBatch(db);
-        querySnapshot.forEach((playerDoc) => {
-            const docRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerDoc.id);
-            batch.update(docRef, { teamId: null, price: null, status: 'queued' });
-        });
+        const soldPlayersRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players");
+        const unsoldPlayersRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "unsold_players");
         
+        const soldSnapshot = await getDocs(soldPlayersRef);
+        soldSnapshot.forEach(doc => batch.delete(doc.ref));
+
+        const unsoldSnapshot = await getDocs(unsoldPlayersRef);
+        unsoldSnapshot.forEach(doc => batch.delete(doc.ref));
+
         await batch.commit();
         
         toast({

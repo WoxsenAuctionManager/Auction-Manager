@@ -55,7 +55,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
       const fetchPlayers = async () => {
         setLoading(true);
         try {
-          const playersQuery = query(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"), where("status", "==", "queued"));
+          const playersQuery = query(collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"));
           const playerSnapshot = await getDocs(playersQuery);
           const playersList = playerSnapshot.docs.map((doc) => ({
             id: doc.id,

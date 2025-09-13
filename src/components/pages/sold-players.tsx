@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useAuctionSelection } from "@/context/auction-selection-context";
@@ -72,8 +72,7 @@ export function SoldPlayersPage() {
     setError(null);
     try {
       const playersQuery = query(
-        collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"),
-        where("status", "==", "sold")
+        collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players")
       );
       const playerSnapshot = await getDocs(playersQuery);
       const playersList = playerSnapshot.docs.map((doc) => ({
@@ -123,17 +122,21 @@ export function SoldPlayersPage() {
     if (!playerToRemove || !user || !selectedAuction) return;
     setIsProcessing(true);
     try {
-      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerToRemove.id);
-      await updateDoc(playerDocRef, {
-        status: 'queued',
-        teamId: null,
-        price: null,
-      });
+      const batch = writeBatch(db);
+      const sourceRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players", playerToRemove.id);
+      const targetRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", playerToRemove.id);
+      
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { teamId, price, teamName, teamLogoUrl, ...queuedPlayer } = playerToRemove;
+      
+      batch.delete(sourceRef);
+      batch.set(targetRef, queuedPlayer);
+      await batch.commit();
 
       setSoldPlayers(players => players.filter(p => p.id !== playerToRemove.id));
       toast({
-        title: "Player Removed",
-        description: `${playerToRemove.name} has been moved back to the available players list.`,
+        title: "Player Moved",
+        description: `${playerToRemove.name} has been moved back to the auction queue.`,
       });
     } catch (error) {
       console.error("Error removing player:", error);

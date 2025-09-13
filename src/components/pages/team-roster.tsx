@@ -91,7 +91,7 @@ export function TeamRosterPage() {
       const teamsData = await Promise.all(
         teamsList.map(async (team) => {
           const playersQuery = query(
-            collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"),
+            collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players"),
             where("teamId", "==", team.id)
           );
           const playerSnapshot = await getDocs(playersQuery);

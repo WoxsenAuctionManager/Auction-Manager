@@ -231,7 +231,7 @@ export function PlayersPage() {
       const playersCollectionRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "players");
       importedPlayers.forEach(player => {
         const newPlayerRef = doc(playersCollectionRef);
-        batch.set(newPlayerRef, { ...player, status: 'queued' });
+        batch.set(newPlayerRef, player);
       });
 
       await batch.commit();

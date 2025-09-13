@@ -133,11 +133,8 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
         });
       } else {
         const playersCollectionRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "players");
-        const docRef = await addDoc(playersCollectionRef, {
-          ...docData,
-          status: 'queued'
-        });
-        onPlayerAdded({ id: docRef.id, ...docData, status: 'queued' });
+        const docRef = await addDoc(playersCollectionRef, docData);
+        onPlayerAdded({ id: docRef.id, ...docData });
         toast({
           title: "Player Added",
           description: `${docData.name} has been successfully added.`,

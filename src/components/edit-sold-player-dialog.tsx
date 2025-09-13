@@ -110,7 +110,7 @@ export function EditSoldPlayerDialog({ open, onOpenChange, player, onPlayerUpdat
     if (!user || !selectedAuction) return;
     setIsSaving(true);
     try {
-      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", player.id);
+      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players", player.id);
       await updateDoc(playerDocRef, {
         teamId: data.teamId,
         price: data.price,

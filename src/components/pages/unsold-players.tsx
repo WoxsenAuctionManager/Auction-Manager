@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { collection, query, where, getDocs, doc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, query, getDocs, doc, writeBatch, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useAuctionSelection } from "@/context/auction-selection-context";
@@ -66,8 +66,7 @@ export function UnsoldPlayersPage() {
       setError(null);
       try {
         const playersQuery = query(
-          collection(db, "users", user.uid, "auctions", selectedAuction.id, "players"),
-          where("status", "==", "unsold")
+          collection(db, "users", user.uid, "auctions", selectedAuction.id, "unsold_players")
         );
         const playerSnapshot = await getDocs(playersQuery);
         const playersList = playerSnapshot.docs.map((doc) => ({
@@ -91,13 +90,18 @@ export function UnsoldPlayersPage() {
     if (!playerToRemove || !user || !selectedAuction) return;
     setIsProcessing(true);
     try {
-      const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", playerToRemove.id);
-      await updateDoc(playerDocRef, { status: 'queued' });
+      const batch = writeBatch(db);
+      const sourceRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "unsold_players", playerToRemove.id);
+      const targetRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", playerToRemove.id);
+
+      batch.delete(sourceRef);
+      batch.set(targetRef, playerToRemove);
+      await batch.commit();
 
       setUnsoldPlayers(players => players.filter(p => p.id !== playerToRemove.id));
       toast({
-        title: "Player Removed",
-        description: `${playerToRemove.name} has been moved back to the available players list.`,
+        title: "Player Moved",
+        description: `${playerToRemove.name} has been moved back to the auction queue.`,
       });
     } catch (error) {
       console.error("Error removing player:", error);
@@ -117,16 +121,19 @@ export function UnsoldPlayersPage() {
     setIsProcessing(true);
     try {
       const batch = writeBatch(db);
+      const targetCollectionRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players");
       unsoldPlayers.forEach(player => {
-        const playerDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "players", player.id);
-        batch.update(playerDocRef, { status: 'queued' });
+        const sourcePlayerRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "unsold_players", player.id);
+        const targetPlayerRef = doc(targetCollectionRef, player.id);
+        batch.delete(sourcePlayerRef);
+        batch.set(targetPlayerRef, player);
       });
       await batch.commit();
 
       setUnsoldPlayers([]);
       toast({
-        title: "All Players Removed",
-        description: "All unsold players have been moved back to the available players list.",
+        title: "All Players Moved",
+        description: "All unsold players have been moved back to the auction queue.",
       });
     } catch (error) {
       console.error("Error removing all players:", error);
