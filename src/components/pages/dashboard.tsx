@@ -52,10 +52,10 @@ interface DashboardData {
 }
 
 const COLORS = [
-    "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d",
-    "#ffc658", "#d0ed57", "#a4de6c", "#8dd1e1", "#83a6ed", "#8e44ad",
-    "#e74c3c", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#34495e",
-    "#1abc9c", "#2980b9"
+  '#A0E7E5', '#B4F8C8', '#FBE7C6', '#FFAEBC', '#D3B4F8', '#92DCE5',
+  '#FFC0CB', '#FA8072', '#87CEEB', '#F0E68C', '#98FB98', '#B0C4DE',
+  '#D8BFD8', '#B0E0E6', '#F5DEB3', '#FF7F50', '#FFE4E1', '#E6E6FA',
+  '#F0FFF0', '#F0FFFF'
 ];
 
 export function DashboardPage() {
@@ -308,3 +308,5 @@ export function DashboardPage() {
     </div>
   );
 }
+
+    
