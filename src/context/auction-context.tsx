@@ -34,8 +34,13 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
 
     const getInitialState = <T,>(key: string, defaultValue: T): T => {
         if (typeof window === 'undefined' || !auctionId) return defaultValue;
-        const saved = localStorage.getItem(`auction_${auctionId}_${key}`);
-        return saved ? JSON.parse(saved) : defaultValue;
+        try {
+            const saved = localStorage.getItem(`auction_${auctionId}_${key}`);
+            return saved ? JSON.parse(saved) : defaultValue;
+        } catch (error) {
+            console.error(`Error reading from localStorage for key: auction_${auctionId}_${key}`, error);
+            return defaultValue;
+        }
     };
     
     const [players, setPlayers] = useState<AuctionPlayer[]>(() => getInitialState('players', []));
@@ -45,25 +50,41 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if(typeof window !== 'undefined' && auctionId) {
-            localStorage.setItem(`auction_${auctionId}_players`, JSON.stringify(players));
+            try {
+                localStorage.setItem(`auction_${auctionId}_players`, JSON.stringify(players));
+            } catch (error) {
+                console.error("Error writing to localStorage for players", error);
+            }
         }
     }, [players, auctionId]);
 
     useEffect(() => {
         if(typeof window !== 'undefined' && auctionId) {
-            localStorage.setItem(`auction_${auctionId}_currentPlayerIndex`, JSON.stringify(currentPlayerIndex));
+            try {
+                localStorage.setItem(`auction_${auctionId}_currentPlayerIndex`, JSON.stringify(currentPlayerIndex));
+            } catch (error) {
+                console.error("Error writing to localStorage for currentPlayerIndex", error);
+            }
         }
     }, [currentPlayerIndex, auctionId]);
 
     useEffect(() => {
         if(typeof window !== 'undefined' && auctionId) {
-            localStorage.setItem(`auction_${auctionId}_auctionStarted`, JSON.stringify(auctionStarted));
+            try {
+                localStorage.setItem(`auction_${auctionId}_auctionStarted`, JSON.stringify(auctionStarted));
+            } catch (error) {
+                console.error("Error writing to localStorage for auctionStarted", error);
+            }
         }
     }, [auctionStarted, auctionId]);
 
     useEffect(() => {
         if(typeof window !== 'undefined' && auctionId) {
-            localStorage.setItem(`auction_${auctionId}_actionHistory`, JSON.stringify(actionHistory));
+            try {
+                localStorage.setItem(`auction_${auctionId}_actionHistory`, JSON.stringify(actionHistory));
+            } catch (error) {
+                console.error("Error writing to localStorage for actionHistory", error);
+            }
         }
     }, [actionHistory, auctionId]);
     
@@ -94,7 +115,7 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
                     const newValue = JSON.parse(event.newValue);
                     keyMapping[event.key](newValue);
                 } catch (e) {
-                    console.error("Failed to parse localStorage value", e);
+                    console.error(`Failed to parse localStorage value for key ${event.key}`, e);
                 }
             }
         };
