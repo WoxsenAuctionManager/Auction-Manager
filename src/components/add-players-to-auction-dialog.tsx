@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -62,8 +61,19 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
             ...doc.data(),
           })) as Player[];
 
+          const soldPlayersQuery = query(collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players"));
+          const soldPlayersSnapshot = await getDocs(soldPlayersQuery);
+          const soldPlayerIds = new Set(soldPlayersSnapshot.docs.map(doc => doc.id));
+          
+          const unsoldPlayersQuery = query(collection(db, "users", user.uid, "auctions", selectedAuction.id, "unsold_players"));
+          const unsoldPlayersSnapshot = await getDocs(unsoldPlayersQuery);
+          const unsoldPlayerIds = new Set(unsoldPlayersSnapshot.docs.map(doc => doc.id));
+
           const playersInQueueIds = new Set(playersInQueue.map(p => p.id));
-          const availablePlayers = playersList.filter(p => !playersInQueueIds.has(p.id));
+          
+          const unavailablePlayerIds = new Set([...soldPlayerIds, ...unsoldPlayerIds, ...playersInQueueIds]);
+
+          const availablePlayers = playersList.filter(p => !unavailablePlayerIds.has(p.id));
           
           setAllPlayers(availablePlayers);
           setSelectedPlayers([]);
