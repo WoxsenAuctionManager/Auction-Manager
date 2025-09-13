@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function convertGoogleDriveUrl(url: string): string {
   if (url && url.includes('drive.google.com')) {
-    const fileIdRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+    const fileIdRegex = /drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/;
     const match = url.match(fileIdRegex);
     if (match && match[1]) {
       const fileId = match[1];
