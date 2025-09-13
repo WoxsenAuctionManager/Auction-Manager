@@ -35,7 +35,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2 } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Eye } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -357,6 +357,12 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
         description: "Live auction link has been copied to your clipboard.",
     });
   };
+  
+  const handlePreview = () => {
+    if (!selectedAuction) return;
+    const url = `${window.location.origin}/live-preview?auctionId=${selectedAuction.id}`;
+    window.open(url, '_blank', 'width=600,height=800,resizable=yes,scrollbars=yes');
+  }
 
   if (loading) {
     return (
@@ -497,6 +503,9 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
             <h1 className="font-semibold text-3xl">Live Auction</h1>
         </div>
         <div className="flex gap-2">
+            <Button variant="outline" onClick={handlePreview}>
+              <Eye className="mr-2"/> Preview
+            </Button>
             <Button variant="outline" onClick={handleShare}>
               <Share2 className="mr-2"/> Share
             </Button>
@@ -598,3 +607,5 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     </>
   );
 }
+
+    
