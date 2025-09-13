@@ -157,12 +157,6 @@ export function DashboardPage() {
     );
   }
 
-  const auctionStatusData = [
-    { name: 'Sold', value: data.soldPlayers },
-    { name: 'Unsold', value: data.unsoldPlayers },
-    { name: 'Remaining in Queue', value: data.totalPlayers - data.soldPlayers - data.unsoldPlayers },
-  ].filter(item => item.value > 0);
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -210,7 +204,7 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Team Purse Status</CardTitle>
@@ -249,44 +243,6 @@ export function DashboardPage() {
                     formatter={(value: number, name: string) => [`₹${value.toLocaleString('en-IN')}`, name]}
                 />
                 <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Auction Status</CardTitle>
-            <CardDescription>A breakdown of player auction statuses.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={auctionStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ cx, cy, midAngle, innerRadius, outerRadius, value, index }) => {
-                    const RADIAN = Math.PI / 180;
-                    const radius = innerRadius + (outerRadius - innerRadius) * 1.2;
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                    return (
-                        <text x={x} y={y} fill="currentColor" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs">
-                            {`${auctionStatusData[index].name} (${value})`}
-                        </text>
-                    );
-                  }}
-                >
-                  {auctionStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{backgroundColor: 'hsl(var(--background))'}} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
