@@ -59,7 +59,7 @@ export function UploadPhotoPage() {
       },
       (error) => {
         console.error("Upload failed:", error);
-        setError("Upload failed. Please check your storage rules and try again.");
+        setError(`Upload failed. Please check your storage rules and try again. Error: ${error.code}`);
         toast({
           variant: "destructive",
           title: "Upload Failed",
@@ -116,7 +116,7 @@ export function UploadPhotoPage() {
             </div>
           )}
            {error && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
+            <div className="flex items-center gap-2 text-sm text-destructive border-l-4 border-destructive bg-destructive/10 p-3 rounded-r-md">
                 <AlertCircle className="h-4 w-4" />
                 <p>{error}</p>
             </div>
