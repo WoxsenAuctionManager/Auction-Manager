@@ -1,9 +1,9 @@
+
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { randomUUID } from "crypto";
 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ export function UploadForm() {
 
     try {
       const fileExtension = selectedFile.name.split('.').pop();
-      const fileName = `${randomUUID()}.${fileExtension}`;
+      const fileName = `${window.crypto.randomUUID()}.${fileExtension}`;
       const storageRef = ref(storage, `uploads/${fileName}`);
       
       const uploadTask = await uploadBytes(storageRef, selectedFile);
