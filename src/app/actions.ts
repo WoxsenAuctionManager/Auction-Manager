@@ -3,7 +3,10 @@
 import { adminStorage } from "@/lib/firebase-admin";
 import { randomUUID } from "crypto";
 
-export async function uploadImageAction(formData: FormData) : Promise<{
+export async function uploadImageAction(
+    prevState: { url?: string; error?: string; },
+    formData: FormData
+) : Promise<{
     url?: string;
     error?: string;
 }> {
