@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState } from "react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { storage, auth } from "@/lib/firebase"; // Import auth
 import Image from "next/image";
 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, CheckCircle, AlertCircle, Copy } from "lucide-react";
 import { Label } from "../ui/label";
+import { useAuth } from "@/context/auth-context"; // Import useAuth hook
 
 export function UploadPhotoPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -21,6 +21,7 @@ export function UploadPhotoPage() {
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth(); // Get the current user
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -50,13 +51,22 @@ export function UploadPhotoPage() {
       return;
     }
 
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Not Authenticated",
+        description: "You must be logged in to upload files.",
+      });
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
     setError(null);
     setDownloadURL(null);
 
-    // The path in the storage bucket
-    const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
+    // Create a unique, user-specific path in the storage bucket
+    const storageRef = ref(storage, `user-uploads/${user.uid}/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     uploadTask.on(
@@ -71,12 +81,10 @@ export function UploadPhotoPage() {
         let errorMessage = `Upload failed. Error: ${uploadError.code}.`;
         if (uploadError.code === 'storage/unauthorized') {
             errorMessage += ' Please check your Storage Security Rules in the Firebase console.';
-        } else if (uploadError.code === 'storage/object-not-found') {
-            errorMessage += ' The file does not exist.';
-        } else if (uploadError.code === 'storage/unknown' && navigator.onLine === false) {
-            errorMessage = 'Upload failed. Please check your network connection.';
         } else if (uploadError.code === 'storage/unknown') {
-            errorMessage += ' This might be a CORS configuration issue. Please ensure your bucket is configured to allow requests from this domain.'
+            errorMessage += ' This is likely a CORS configuration issue. Please ensure your bucket is configured to allow requests from this domain.'
+        } else if (uploadError.code === 'storage/retry-limit-exceeded') {
+            errorMessage += ' Network connection error. Please check your internet connection and try again.'
         }
 
         setError(errorMessage);
@@ -131,8 +139,9 @@ export function UploadPhotoPage() {
               type="file" 
               onChange={handleFileChange} 
               accept="image/*"
-              disabled={isUploading} 
+              disabled={isUploading || !user} 
             />
+            {!user && <p className="text-sm text-muted-foreground mt-2">Please log in to upload photos.</p>}
           </div>
           {file && !isUploading && (
              <div className="text-sm text-muted-foreground">
@@ -187,7 +196,7 @@ export function UploadPhotoPage() {
         <CardFooter>
           <Button 
             onClick={handleUpload} 
-            disabled={!file || isUploading}
+            disabled={!file || isUploading || !user}
             className="w-full"
           >
             {isUploading ? "Uploading..." : "Upload to Firebase"}
