@@ -55,6 +55,7 @@ export function UploadPhotoPage() {
     setError(null);
     setDownloadURL(null);
 
+    // The path in the storage bucket
     const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -66,7 +67,19 @@ export function UploadPhotoPage() {
       },
       (uploadError) => {
         console.error("Upload failed:", uploadError);
-        setError(`Upload failed. Error: ${uploadError.code}. Please check your Firebase Storage rules and CORS configuration.`);
+        // Provide a more detailed error message
+        let errorMessage = `Upload failed. Error: ${uploadError.code}.`;
+        if (uploadError.code === 'storage/unauthorized') {
+            errorMessage += ' Please check your Storage Security Rules in the Firebase console.';
+        } else if (uploadError.code === 'storage/object-not-found') {
+            errorMessage += ' The file does not exist.';
+        } else if (uploadError.code === 'storage/unknown' && navigator.onLine === false) {
+            errorMessage = 'Upload failed. Please check your network connection.';
+        } else if (uploadError.code === 'storage/unknown') {
+            errorMessage += ' This might be a CORS configuration issue. Please ensure your bucket is configured to allow requests from this domain.'
+        }
+
+        setError(errorMessage);
         toast({
           variant: "destructive",
           title: "Upload Failed",
@@ -133,8 +146,8 @@ export function UploadPhotoPage() {
             </div>
           )}
            {error && (
-            <div className="flex items-center gap-2 text-sm text-destructive border-l-4 border-destructive bg-destructive/10 p-3 rounded-r-md">
-                <AlertCircle className="h-4 w-4" />
+            <div className="flex items-start gap-3 text-sm text-destructive border-l-4 border-destructive bg-destructive/10 p-3 rounded-r-md">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <p>{error}</p>
             </div>
            )}
