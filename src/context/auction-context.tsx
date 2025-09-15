@@ -31,14 +31,7 @@ const AuctionContext = createContext<AuctionContextType | undefined>(undefined);
 const setLocalStorageItem = (key: string, value: any) => {
     if (typeof window === 'undefined') return;
     try {
-        const stringifiedValue = JSON.stringify(value);
-        localStorage.setItem(key, stringifiedValue);
-        // Dispatch a custom event to notify other tabs
-        window.dispatchEvent(new StorageEvent('storage', {
-            key,
-            newValue: stringifiedValue,
-            storageArea: localStorage,
-        }));
+        localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
         console.error(`Error setting localStorage item for key: ${key}`, error);
     }
@@ -65,23 +58,20 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
     const [_auctionStarted, _setAuctionStarted] = useState<boolean>(() => getInitialState('auctionStarted', false));
     const [_actionHistory, _setActionHistory] = useState<ActionRecord[]>(() => getInitialState('actionHistory', []));
 
-    const createSetter = <T,>(stateSetter: React.Dispatch<React.SetStateAction<T>>, key: string, defaultValue: T) => (value: React.SetStateAction<T>) => {
-        if (!auctionId) {
-            stateSetter(value);
-            return;
-        };
-        
-        const currentState = getInitialState(key, defaultValue);
-        const resolvedValue = value instanceof Function ? value(currentState) : value;
-
-        stateSetter(resolvedValue);
-        setLocalStorageItem(`auction_${auctionId}_${key}`, resolvedValue);
+    const createSetter = <T,>(stateSetter: React.Dispatch<React.SetStateAction<T>>, key: string) => (value: React.SetStateAction<T>) => {
+        stateSetter(prevState => {
+            const resolvedValue = value instanceof Function ? value(prevState) : value;
+            if (auctionId) {
+                setLocalStorageItem(`auction_${auctionId}_${key}`, resolvedValue);
+            }
+            return resolvedValue;
+        });
     };
 
-    const setPlayers = createSetter(_setPlayers, 'players', []);
-    const setCurrentPlayerIndex = createSetter(_setCurrentPlayerIndex, 'currentPlayerIndex', 0);
-    const setAuctionStarted = createSetter(_setAuctionStarted, 'auctionStarted', false);
-    const setActionHistory = createSetter(_setActionHistory, 'actionHistory', []);
+    const setPlayers = createSetter(_setPlayers, 'players');
+    const setCurrentPlayerIndex = createSetter(_setCurrentPlayerIndex, 'currentPlayerIndex');
+    const setAuctionStarted = createSetter(_setAuctionStarted, 'auctionStarted');
+    const setActionHistory = createSetter(_setActionHistory, 'actionHistory');
 
     // Effect to reset state when auction changes
     useEffect(() => {
