@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   collection,
   getDocs,
   doc,
   deleteDoc,
   DocumentData,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import * as XLSX from "xlsx";
 import { useAuth } from "@/context/auth-context";
 import { useAuctionSelection } from "@/context/auction-selection-context";
 import {
@@ -34,7 +36,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertCircle, PlusCircle, Trash2, Pencil, Shield, MoreHorizontal, Loader2 } from "lucide-react";
+import { AlertCircle, PlusCircle, Trash2, Pencil, Shield, MoreHorizontal, Loader2, Upload } from "lucide-react";
 import { AddTeamDialog } from "../add-team-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -44,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { convertGoogleDriveUrl } from "@/lib/utils";
+import { ImportTeamsDialog } from "../import-teams-dialog";
 
 export interface Team {
   id: string;
@@ -58,6 +61,11 @@ export function TeamsPage() {
     const [isAddTeamDialogOpen, setIsAddTeamDialogOpen] = useState(false);
     const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
     const [teamToEdit, setTeamToEdit] = useState<Team | null>(null);
+    const [isImporting, setIsImporting] = useState(false);
+    const [isImportTeamDialogOpen, setIsImportTeamDialogOpen] = useState(false);
+    const [importedTeams, setImportedTeams] = useState<Omit<Team, 'id'>[]>([]);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const { user } = useAuth();
     const { selectedAuction } = useAuctionSelection();
@@ -135,6 +143,66 @@ export function TeamsPage() {
         setTeamToEdit(null);
     }
 
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const data = new Uint8Array(e.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet);
+            
+            const newTeams = json.map((row: any) => ({
+              name: row.Name || '',
+              logoUrl: row['Logo URL'] ? convertGoogleDriveUrl(row['Logo URL']) : '',
+            }));
+    
+            setImportedTeams(newTeams);
+            setIsImportTeamDialogOpen(true);
+          };
+          reader.readAsArrayBuffer(file);
+        }
+         if(fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+    };
+
+    const handleConfirmImport = async () => {
+        if (!user || !selectedAuction) return;
+        setIsImporting(true);
+        try {
+          const batch = writeBatch(db);
+          const teamsCollectionRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "teams");
+          importedTeams.forEach(team => {
+            const newTeamRef = doc(teamsCollectionRef);
+            batch.set(newTeamRef, team);
+          });
+    
+          await batch.commit();
+    
+          toast({
+            title: "Import Successful",
+            description: `${importedTeams.length} teams have been successfully imported.`,
+          });
+    
+          fetchTeams();
+          
+        } catch (error) {
+          console.error("Error importing teams: ", error);
+          toast({
+            variant: "destructive",
+            title: "Import Failed",
+            description: "An error occurred while importing teams. Please check the file and try again.",
+          });
+        } finally {
+          setIsImporting(false);
+          setIsImportTeamDialogOpen(false);
+          setImportedTeams([]);
+        }
+    };
+
     return (
         <>
             <div className="flex items-center">
@@ -144,12 +212,35 @@ export function TeamsPage() {
                         Manage your teams here.
                     </p>
                 </div>
-                <Button onClick={() => {
-                    setTeamToEdit(null);
-                    setIsAddTeamDialogOpen(true);
-                }}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Team
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button onClick={() => {
+                        setTeamToEdit(null);
+                        setIsAddTeamDialogOpen(true);
+                    }}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Team
+                    </Button>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">More options</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => fileInputRef.current?.click()}>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Import Teams
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept=".xlsx, .xls, .csv"
+                    />
+                </div>
             </div>
 
             <AddTeamDialog
@@ -158,6 +249,14 @@ export function TeamsPage() {
                 onTeamAdded={handleTeamAdded}
                 onTeamUpdated={handleTeamUpdated}
                 teamToEdit={teamToEdit}
+            />
+
+            <ImportTeamsDialog
+                open={isImportTeamDialogOpen}
+                onOpenChange={setIsImportTeamDialogOpen}
+                onConfirmImport={handleConfirmImport}
+                teams={importedTeams}
+                isImporting={isImporting}
             />
 
             {error && (
