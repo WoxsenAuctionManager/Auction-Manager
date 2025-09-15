@@ -39,11 +39,9 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
 
   useEffect(() => {
     if (!loading && !user) {
-      if (pathname !== '/live-preview') {
-        router.push('/login');
-      }
+      router.push('/login');
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router]);
   
   useEffect(() => {
     if (!loading && user && showNav && !selectedAuction && pathname !== '/') {
@@ -57,10 +55,8 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
   };
 
   const shouldShowLoader = loading || (showNav && !selectedAuction && user);
-  const isPublicPreview = pathname === '/live-preview' && !user;
 
-
-  if (shouldShowLoader && !isPublicPreview) {
+  if (shouldShowLoader) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin" />
