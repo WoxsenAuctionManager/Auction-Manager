@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2, Home, LayoutDashboard, Upload } from "lucide-react";
+import { Users, Shield, Menu, ClipboardList, Gavel, FileCheck2, FileX2, LogOut, Loader2, Home, LayoutDashboard } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
@@ -28,7 +28,6 @@ const navLinks = [
   { href: "/auction", label: "Auction", icon: Gavel },
   { href: "/sold-players", label: "Sold Players", icon: FileCheck2 },
   { href: "/unsold-players", label: "Unsold Players", icon: FileX2 },
-  { href: "/upload-photo", label: "Upload Photo", icon: Upload },
 ];
 
 export function AppLayout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
