@@ -57,13 +57,13 @@ export function UploadPhotoPage() {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setUploadProgress(progress);
       },
-      (error) => {
-        console.error("Upload failed:", error);
-        setError(`Upload failed. Please check your storage rules and try again. Error: ${error.code}`);
+      (uploadError) => {
+        console.error("Upload failed:", uploadError);
+        setError(`Upload failed. Please check your storage rules and try again. Error: ${uploadError.code}`);
         toast({
           variant: "destructive",
           title: "Upload Failed",
-          description: error.message,
+          description: uploadError.message,
         });
         setUploadProgress(null);
       },
