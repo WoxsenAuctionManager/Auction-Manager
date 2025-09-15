@@ -32,6 +32,7 @@ export async function uploadImageAction(
 
         await new Promise((resolve, reject) => {
             blobStream.on('error', (err) => {
+                console.error("Blob stream error:", err);
                 reject(err);
             });
             blobStream.on('finish', () => {
@@ -48,6 +49,7 @@ export async function uploadImageAction(
 
     } catch (error) {
         console.error("Error uploading file: ", error);
-        return { error: (error as Error).message || "Failed to upload file." };
+        const errorMessage = (error as any)?.message || "Failed to upload file.";
+        return { error: `Upload Failed\n${errorMessage}` };
     }
 }
