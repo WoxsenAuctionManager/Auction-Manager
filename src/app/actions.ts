@@ -15,7 +15,7 @@ export async function uploadImageAction(
         return { error: 'No file selected.' };
     }
     
-    const bucket = adminStorage.bucket();
+    const bucket = adminStorage; // Use adminStorage directly
     const fileExtension = file.name.split('.').pop();
     const fileName = `${randomUUID()}.${fileExtension}`;
     const filePath = `uploads/${fileName}`;
