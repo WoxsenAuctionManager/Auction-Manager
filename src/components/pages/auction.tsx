@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import {
   collection,
   getDocs,
@@ -38,7 +39,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2 } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -551,6 +552,11 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
             <h1 className="font-semibold text-3xl">Live Auction</h1>
         </div>
         <div className="flex gap-2">
+            <Link href="/live-preview" target="_blank">
+                <Button variant="outline">
+                    <Share2 className="mr-2"/> Share
+                </Button>
+            </Link>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" disabled={isProcessing}>
