@@ -65,6 +65,7 @@ export function UploadPhotoPage() {
     setError(null);
     setDownloadURL(null);
 
+    // Create a user-specific and unique file path
     const storageRef = ref(storage, `user-uploads/${user.uid}/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -77,10 +78,12 @@ export function UploadPhotoPage() {
       (uploadError) => {
         console.error("Upload failed:", uploadError);
         let errorMessage = `Upload failed. Code: ${uploadError.code}.`;
+        
+        // Provide more specific feedback for common errors
         if (uploadError.code === 'storage/unauthorized') {
-            errorMessage += ' You do not have permission to upload. Please check your Storage Security Rules.';
+            errorMessage = 'Upload failed. You do not have permission to upload files. Please check your Firebase Storage security rules.';
         } else if (uploadError.code === 'storage/unknown' || uploadError.code === 'storage/retry-limit-exceeded') {
-            errorMessage += ' A network or CORS error occurred. Please ensure your bucket is configured to allow requests from this domain.'
+            errorMessage = 'A network or CORS error occurred. This can happen if the storage bucket is not configured to allow requests from this web domain. Please check your bucket\'s CORS configuration in the Google Cloud Console.'
         }
 
         setError(errorMessage);
