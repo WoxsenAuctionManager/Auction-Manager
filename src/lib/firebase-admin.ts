@@ -16,14 +16,14 @@ if (
 const serviceAccount = {
   projectId: process.env.FIREBASE_PROJECT_ID,
   clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-  privateKey: process.env.FIREBASE_PRIVATE_KEY,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
 };
 
 const app = getApps().length
   ? getApp()
   : initializeApp({
       credential: cert(serviceAccount),
-      storageBucket: "studio-2256766213-a72a9.firebasestorage.app", // Corrected bucket name
+      storageBucket: "studio-2256766213-a72a9.appspot.com",
     });
 
 export const adminDb = getFirestore(app);
