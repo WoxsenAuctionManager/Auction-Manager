@@ -65,21 +65,28 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
     const [_auctionStarted, _setAuctionStarted] = useState<boolean>(() => getInitialState('auctionStarted', false));
     const [_actionHistory, _setActionHistory] = useState<ActionRecord[]>(() => getInitialState('actionHistory', []));
 
-    const createSetter = <T,>(stateSetter: React.Dispatch<React.SetStateAction<T>>, key: string) => (value: React.SetStateAction<T>) => {
+    const createSetter = <T,>(stateSetter: React.Dispatch<React.SetStateAction<T>>, key: string, defaultValue: T) => (value: React.SetStateAction<T>) => {
         if (!auctionId) {
             stateSetter(value);
             return;
         };
-
-        const resolvedValue = value instanceof Function ? value(getInitialState(key, stateSetter.arguments)) : value;
+        
+        let resolvedValue;
+        if (value instanceof Function) {
+            const currentState = getInitialState(key, defaultValue);
+            resolvedValue = value(currentState);
+        } else {
+            resolvedValue = value;
+        }
+        
         stateSetter(resolvedValue);
         setLocalStorageItem(`auction_${auctionId}_${key}`, resolvedValue);
     };
 
-    const setPlayers = createSetter(_setPlayers, 'players');
-    const setCurrentPlayerIndex = createSetter(_setCurrentPlayerIndex, 'currentPlayerIndex');
-    const setAuctionStarted = createSetter(_setAuctionStarted, 'auctionStarted');
-    const setActionHistory = createSetter(_setActionHistory, 'actionHistory');
+    const setPlayers = createSetter(_setPlayers, 'players', []);
+    const setCurrentPlayerIndex = createSetter(_setCurrentPlayerIndex, 'currentPlayerIndex', 0);
+    const setAuctionStarted = createSetter(_setAuctionStarted, 'auctionStarted', false);
+    const setActionHistory = createSetter(_setActionHistory, 'actionHistory', []);
 
     // Effect to reset state when auction changes
     useEffect(() => {
