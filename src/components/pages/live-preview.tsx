@@ -38,15 +38,15 @@ export function LivePreviewPage() {
 
     if (!auctionStarted) {
       return (
-        <Card className="max-w-4xl mx-auto animate-fade-in">
+        <Card className="max-w-5xl mx-auto animate-fade-in">
           <CardHeader>
-            <CardTitle className="text-center text-4xl">
+            <CardTitle className="text-center text-5xl">
               Welcome to the Auction
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <p className="text-xl font-semibold text-muted-foreground">
+            <div className="text-center py-16">
+              <p className="text-2xl font-semibold text-muted-foreground">
                 The auction will begin shortly.
               </p>
             </div>
@@ -57,15 +57,15 @@ export function LivePreviewPage() {
 
     if (!currentPlayer) {
       return (
-        <Card className="max-w-4xl mx-auto animate-fade-in">
+        <Card className="max-w-5xl mx-auto animate-fade-in">
           <CardHeader>
-            <CardTitle className="text-center text-4xl">
+            <CardTitle className="text-center text-5xl">
               Auction Finished
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <p className="text-xl font-semibold text-muted-foreground">
+            <div className="text-center py-16">
+              <p className="text-2xl font-semibold text-muted-foreground">
                 All players have been auctioned.
               </p>
             </div>
@@ -75,25 +75,25 @@ export function LivePreviewPage() {
     }
 
     return (
-      <Card className="max-w-4xl mx-auto animate-fade-in">
+      <Card className="max-w-5xl mx-auto animate-fade-in">
         <CardHeader>
-          <CardTitle className="text-center text-5xl font-bold tracking-tight">
+          <CardTitle className="text-center text-6xl font-bold tracking-tight">
             {currentPlayer.name}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col md:flex-row items-center gap-8 pt-8">
-          <Avatar className="h-64 w-64 border-4 border-primary shadow-lg">
+        <CardContent className="flex flex-col md:flex-row items-center gap-12 pt-8">
+          <Avatar className="h-80 w-80 border-4 border-primary shadow-lg">
             <AvatarImage
               src={currentPlayer.photoUrl}
               alt={currentPlayer.name}
               className="object-cover"
             />
-            <AvatarFallback className="text-8xl">
+            <AvatarFallback className="text-9xl">
               <User />
             </AvatarFallback>
           </Avatar>
-          <div className="w-full space-y-4">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-2xl">
+          <div className="w-full space-y-6">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-3xl">
               <p className="font-semibold text-muted-foreground">Department</p>
               <p className="font-medium">{currentPlayer.department}</p>
               <p className="font-semibold text-muted-foreground">Year</p>
