@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2, Search, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { User, Loader2, Search, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import { Input } from "../ui/input";
@@ -43,6 +43,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { EditSoldPlayerDialog } from "../edit-sold-player-dialog";
 import { convertGoogleDriveUrl } from "@/lib/utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface SoldPlayer extends Player {
   price?: number;
@@ -164,14 +166,40 @@ export function SoldPlayersPage() {
     );
   }, [soldPlayers, searchTerm]);
 
+  const handleDownload = () => {
+    const doc = new jsPDF();
+    doc.text("Sold Players", 14, 16);
+    autoTable(doc, {
+      startY: 20,
+      head: [['Name', 'Position', 'Team', 'Price']],
+      body: filteredPlayers.map(player => [
+        player.name,
+        player.player_position,
+        player.teamName || 'N/A',
+        `₹${player.price?.toLocaleString('en-IN') || 'N/A'}`,
+      ]),
+    });
+    doc.save("sold-players.pdf");
+  };
+
   return (
     <>
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="font-semibold text-3xl">Sold Players</h1>
-          <p className="text-muted-foreground mt-1">
-            A list of all players who have been sold in the auction.
-          </p>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="font-semibold text-3xl">Sold Players</h1>
+            <p className="text-muted-foreground mt-1">
+              A list of all players who have been sold in the auction.
+            </p>
+          </div>
+          <Button 
+            variant="outline"
+            onClick={handleDownload}
+            disabled={filteredPlayers.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Download List
+          </Button>
         </div>
 
         <Card>
