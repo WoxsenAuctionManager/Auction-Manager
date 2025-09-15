@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useAuctionSelection } from "@/context/auction-selection-context";
+import { useAuctionSelection, AuctionListItem } from "@/context/auction-selection-context";
 
 const auctionSchema = z.object({
   name: z.string().min(3, { message: "Auction name must be at least 3 characters." }),
@@ -42,53 +42,74 @@ interface CreateAuctionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAuctionCreated: (newAuction: any) => void;
+  onAuctionUpdated: (updatedAuction: any) => void;
+  auctionToEdit?: AuctionListItem | null;
 }
 
-export function CreateAuctionDialog({ open, onOpenChange, onAuctionCreated }: CreateAuctionDialogProps) {
+export function CreateAuctionDialog({ open, onOpenChange, onAuctionCreated, onAuctionUpdated, auctionToEdit }: CreateAuctionDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { setSelectedAuction } = useAuctionSelection();
   const router = useRouter();
+  const isEditMode = !!auctionToEdit;
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionSchema),
     defaultValues: { name: "" },
   });
 
+  useEffect(() => {
+    if (open && isEditMode && auctionToEdit) {
+      form.reset({ name: auctionToEdit.name });
+    } else if (!isEditMode) {
+      form.reset({ name: "" });
+    }
+  }, [open, isEditMode, auctionToEdit, form]);
+
   const onSubmit = async (data: AuctionFormValues) => {
     if (!user) {
-        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to create an auction."});
+        toast({ variant: "destructive", title: "Authentication Error", description: "You must be logged in to perform this action."});
         return;
     }
 
     setIsSaving(true);
     try {
-      const auctionsCollectionRef = collection(db, "users", user.uid, "auctions");
-      const docRef = await addDoc(auctionsCollectionRef, {
-        name: data.name,
-        createdAt: serverTimestamp(),
-        owner: user.uid,
-      });
-      
-      const newAuction = { id: docRef.id, name: data.name };
-      onAuctionCreated(newAuction);
-      setSelectedAuction(newAuction);
-      
-      toast({
-        title: "Auction Created",
-        description: `The auction "${data.name}" has been successfully created.`,
-      });
-
+        if(isEditMode && auctionToEdit) {
+            const auctionDocRef = doc(db, "users", user.uid, "auctions", auctionToEdit.id);
+            await updateDoc(auctionDocRef, { name: data.name });
+            const updatedAuction = { ...auctionToEdit, name: data.name };
+            onAuctionUpdated(updatedAuction);
+            toast({
+                title: "Auction Updated",
+                description: `The auction name has been updated to "${data.name}".`
+            });
+        } else {
+            const auctionsCollectionRef = collection(db, "users", user.uid, "auctions");
+            const docRef = await addDoc(auctionsCollectionRef, {
+                name: data.name,
+                createdAt: serverTimestamp(),
+                owner: user.uid,
+            });
+            
+            const newAuction = { id: docRef.id, name: data.name };
+            onAuctionCreated(newAuction);
+            setSelectedAuction(newAuction);
+            
+            toast({
+                title: "Auction Created",
+                description: `The auction "${data.name}" has been successfully created.`,
+            });
+            router.push('/players');
+        }
       onOpenChange(false);
-      router.push('/players');
 
     } catch (error) {
-      console.error("Error creating auction: ", error);
+      console.error("Error saving auction: ", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to create auction. Please try again.`,
+        description: `Failed to ${isEditMode ? 'update' : 'create'} auction. Please try again.`,
       });
     } finally {
       setIsSaving(false);
@@ -103,9 +124,9 @@ export function CreateAuctionDialog({ open, onOpenChange, onAuctionCreated }: Cr
     }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Auction</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Auction Name' : 'Create New Auction'}</DialogTitle>
           <DialogDescription>
-            Give your new auction a name to get started.
+            {isEditMode ? 'Update the name of your auction.' : 'Give your new auction a name to get started.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -127,7 +148,7 @@ export function CreateAuctionDialog({ open, onOpenChange, onAuctionCreated }: Cr
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Auction
+                {isEditMode ? 'Save Changes' : 'Create Auction'}
               </Button>
             </DialogFooter>
           </form>
