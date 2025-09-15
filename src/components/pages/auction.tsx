@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -36,10 +37,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2 } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -65,6 +71,56 @@ import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 import { useAuction } from "@/context/auction-context";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string };
+
+function SharePopover() {
+    const [livePreviewUrl, setLivePreviewUrl] = useState('');
+    const [hasCopied, setHasCopied] = useState(false);
+    const { toast } = useToast();
+  
+    useEffect(() => {
+      if (typeof window !== 'undefined') {
+        setLivePreviewUrl(`${window.location.origin}/live-preview`);
+      }
+    }, []);
+  
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(livePreviewUrl);
+      setHasCopied(true);
+      toast({ title: 'Live preview link copied!' });
+      setTimeout(() => setHasCopied(false), 2000);
+    };
+  
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+            <Button variant="outline">
+                <Share2 className="mr-2"/> Share
+            </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none">Share Live Preview</h4>
+              <p className="text-sm text-muted-foreground">
+                Anyone with this link can view the live auction.
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Input value={livePreviewUrl} readOnly className="h-8 flex-1" />
+              <Button size="icon" className="h-8 w-8" onClick={copyToClipboard}>
+                {hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <Link href="/live-preview" target="_blank" className="w-full">
+              <Button variant="secondary" className="w-full">
+                <ExternalLink className="mr-2" /> Go Live
+              </Button>
+            </Link>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+}
 
 export function AuctionPage() {
   const {
@@ -565,11 +621,7 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
             <h1 className="font-semibold text-3xl">Live Auction</h1>
         </div>
         <div className="flex gap-2">
-            <Link href="/live-preview" target="_blank">
-                <Button variant="outline">
-                    <Share2 className="mr-2"/> Share
-                </Button>
-            </Link>
+            <SharePopover />
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" disabled={isProcessing}>
@@ -668,3 +720,5 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     </>
   );
 }
+
+    
