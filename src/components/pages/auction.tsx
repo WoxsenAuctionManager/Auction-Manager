@@ -162,11 +162,12 @@ export function AuctionPage() {
 
   const handleSold = async () => {
     if (!user || !selectedAuction) return;
-    if (!selectedTeam || price === "") {
+    const currentPrice = Number(price);
+    if (!selectedTeam || !price || currentPrice < 0) {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Please select a team and enter a price.",
+        description: "Please select a team and enter a valid price.",
       });
       return;
     }
@@ -177,29 +178,41 @@ export function AuctionPage() {
     setIsProcessing(true);
 
     try {
-      // Fetch squad size
+      // Fetch auction settings for initialPurse and squadSize
       const settingsDocRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "auction_settings", "config");
       const settingsSnap = await getDoc(settingsDocRef);
-      const squadSize = settingsSnap.exists() ? settingsSnap.data().squadSize : 0;
+      const { initialPurse = 0, squadSize = 0 } = settingsSnap.exists() ? settingsSnap.data() : {};
+      
+      const teamQuery = query(
+          collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players"),
+          where("teamId", "==", selectedTeam)
+      );
+      const teamSoldPlayersSnap = await getDocs(teamQuery);
+      const teamPlayerCount = teamSoldPlayersSnap.size;
 
-      if (squadSize > 0) {
-        // Fetch current number of players in the team
-        const playersInTeamQuery = query(
-            collection(db, "users", user.uid, "auctions", selectedAuction.id, "sold_players"),
-            where("teamId", "==", selectedTeam)
-        );
-        const teamPlayerCountSnapshot = await getCountFromServer(playersInTeamQuery);
-        const teamPlayerCount = teamPlayerCountSnapshot.data().count;
+      // Check squad size limit
+      if (squadSize > 0 && teamPlayerCount >= squadSize) {
+          toast({
+              variant: "destructive",
+              title: "Team Full",
+              description: `This team has already reached its squad limit of ${squadSize} players.`,
+          });
+          setIsProcessing(false);
+          return;
+      }
+      
+      // Check remaining purse
+      const totalSpent = teamSoldPlayersSnap.docs.reduce((sum, doc) => sum + (doc.data().price || 0), 0);
+      const remainingPurse = initialPurse - totalSpent;
 
-        if (teamPlayerCount >= squadSize) {
-            toast({
-                variant: "destructive",
-                title: "Team Full",
-                description: `This team has already reached its squad limit of ${squadSize} players.`,
-            });
-            setIsProcessing(false);
-            return;
-        }
+      if (currentPrice > remainingPurse) {
+        toast({
+          variant: "destructive",
+          title: "Insufficient Funds",
+          description: `This team only has ₹${remainingPurse.toLocaleString('en-IN')} remaining and cannot afford this player.`,
+        });
+        setIsProcessing(false);
+        return;
       }
 
       const newAction = {
@@ -215,7 +228,7 @@ export function AuctionPage() {
       const soldData = {
         ...currentPlayer,
         teamId: selectedTeam,
-        price: Number(price),
+        price: currentPrice,
       };
 
       const sourceRef = doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", currentPlayer.id);
@@ -241,7 +254,7 @@ export function AuctionPage() {
         title: "Player Sold!",
         description: `${currentPlayer.name} has been sold to ${
           teams.find((t) => t.id === selectedTeam)?.name
-        } for ₹${Number(price).toLocaleString('en-IN')}.`,
+        } for ₹${currentPrice.toLocaleString('en-IN')}.`,
       });
     } catch (error) {
       console.error("Error selling player:", error);
