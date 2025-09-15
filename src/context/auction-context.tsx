@@ -17,16 +17,33 @@ interface ActionRecord {
 
 interface AuctionContextType {
     players: AuctionPlayer[];
-    setPlayers: React.Dispatch<React.SetStateAction<AuctionPlayer[]>>;
+    setPlayers: (value: React.SetStateAction<AuctionPlayer[]>) => void;
     currentPlayerIndex: number;
-    setCurrentPlayerIndex: React.Dispatch<React.SetStateAction<number>>;
+    setCurrentPlayerIndex: (value: React.SetStateAction<number>) => void;
     auctionStarted: boolean;
-    setAuctionStarted: React.Dispatch<React.SetStateAction<boolean>>;
+    setAuctionStarted: (value: React.SetStateAction<boolean>) => void;
     actionHistory: ActionRecord[];
-    setActionHistory: React.Dispatch<React.SetStateAction<ActionRecord[]>>;
+    setActionHistory: (value: React.SetStateAction<ActionRecord[]>) => void;
 }
 
 const AuctionContext = createContext<AuctionContextType | undefined>(undefined);
+
+const setLocalStorageItem = (key: string, value: any) => {
+    if (typeof window === 'undefined') return;
+    try {
+        const stringifiedValue = JSON.stringify(value);
+        localStorage.setItem(key, stringifiedValue);
+        // Dispatch a custom event to notify other tabs
+        window.dispatchEvent(new StorageEvent('storage', {
+            key,
+            newValue: stringifiedValue,
+            storageArea: localStorage,
+        }));
+    } catch (error) {
+        console.error(`Error setting localStorage item for key: ${key}`, error);
+    }
+};
+
 
 export function AuctionProvider({ children }: { children: ReactNode }) {
     const { selectedAuction } = useAuctionSelection();
@@ -43,57 +60,34 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
         }
     };
     
-    const [players, setPlayers] = useState<AuctionPlayer[]>(() => getInitialState('players', []));
-    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(() => getInitialState('currentPlayerIndex', 0));
-    const [auctionStarted, setAuctionStarted] = useState<boolean>(() => getInitialState('auctionStarted', false));
-    const [actionHistory, setActionHistory] = useState<ActionRecord[]>(() => getInitialState('actionHistory', []));
+    const [_players, _setPlayers] = useState<AuctionPlayer[]>(() => getInitialState('players', []));
+    const [_currentPlayerIndex, _setCurrentPlayerIndex] = useState<number>(() => getInitialState('currentPlayerIndex', 0));
+    const [_auctionStarted, _setAuctionStarted] = useState<boolean>(() => getInitialState('auctionStarted', false));
+    const [_actionHistory, _setActionHistory] = useState<ActionRecord[]>(() => getInitialState('actionHistory', []));
 
-    useEffect(() => {
-        if(typeof window !== 'undefined' && auctionId) {
-            try {
-                localStorage.setItem(`auction_${auctionId}_players`, JSON.stringify(players));
-            } catch (error) {
-                console.error("Error writing to localStorage for players", error);
-            }
-        }
-    }, [players, auctionId]);
+    const createSetter = <T,>(stateSetter: React.Dispatch<React.SetStateAction<T>>, key: string) => (value: React.SetStateAction<T>) => {
+        if (!auctionId) {
+            stateSetter(value);
+            return;
+        };
 
-    useEffect(() => {
-        if(typeof window !== 'undefined' && auctionId) {
-            try {
-                localStorage.setItem(`auction_${auctionId}_currentPlayerIndex`, JSON.stringify(currentPlayerIndex));
-            } catch (error) {
-                console.error("Error writing to localStorage for currentPlayerIndex", error);
-            }
-        }
-    }, [currentPlayerIndex, auctionId]);
+        const resolvedValue = value instanceof Function ? value(getInitialState(key, stateSetter.arguments)) : value;
+        stateSetter(resolvedValue);
+        setLocalStorageItem(`auction_${auctionId}_${key}`, resolvedValue);
+    };
 
-    useEffect(() => {
-        if(typeof window !== 'undefined' && auctionId) {
-            try {
-                localStorage.setItem(`auction_${auctionId}_auctionStarted`, JSON.stringify(auctionStarted));
-            } catch (error) {
-                console.error("Error writing to localStorage for auctionStarted", error);
-            }
-        }
-    }, [auctionStarted, auctionId]);
+    const setPlayers = createSetter(_setPlayers, 'players');
+    const setCurrentPlayerIndex = createSetter(_setCurrentPlayerIndex, 'currentPlayerIndex');
+    const setAuctionStarted = createSetter(_setAuctionStarted, 'auctionStarted');
+    const setActionHistory = createSetter(_setActionHistory, 'actionHistory');
 
-    useEffect(() => {
-        if(typeof window !== 'undefined' && auctionId) {
-            try {
-                localStorage.setItem(`auction_${auctionId}_actionHistory`, JSON.stringify(actionHistory));
-            } catch (error) {
-                console.error("Error writing to localStorage for actionHistory", error);
-            }
-        }
-    }, [actionHistory, auctionId]);
-    
     // Effect to reset state when auction changes
     useEffect(() => {
-        setPlayers(getInitialState('players', []));
-        setCurrentPlayerIndex(getInitialState('currentPlayerIndex', 0));
-        setAuctionStarted(getInitialState('auctionStarted', false));
-        setActionHistory(getInitialState('actionHistory', []));
+        _setPlayers(getInitialState('players', []));
+        _setCurrentPlayerIndex(getInitialState('currentPlayerIndex', 0));
+        _setAuctionStarted(getInitialState('auctionStarted', false));
+        _setActionHistory(getInitialState('actionHistory', []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [auctionId]);
 
     // Effect to listen for changes in other tabs
@@ -104,10 +98,10 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
             if (event.storageArea !== localStorage) return;
             
             const keyMapping: { [key: string]: (value: any) => void } = {
-                [`auction_${auctionId}_players`]: setPlayers,
-                [`auction_${auctionId}_currentPlayerIndex`]: setCurrentPlayerIndex,
-                [`auction_${auctionId}_auctionStarted`]: setAuctionStarted,
-                [`auction_${auctionId}_actionHistory`]: setActionHistory,
+                [`auction_${auctionId}_players`]: _setPlayers,
+                [`auction_${auctionId}_currentPlayerIndex`]: _setCurrentPlayerIndex,
+                [`auction_${auctionId}_auctionStarted`]: _setAuctionStarted,
+                [`auction_${auctionId}_actionHistory`]: _setActionHistory,
             };
 
             if (event.key && event.key in keyMapping && event.newValue) {
@@ -128,13 +122,13 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
 
 
     const value = {
-        players,
+        players: _players,
         setPlayers,
-        currentPlayerIndex,
+        currentPlayerIndex: _currentPlayerIndex,
         setCurrentPlayerIndex,
-        auctionStarted,
+        auctionStarted: _auctionStarted,
         setAuctionStarted,
-        actionHistory,
+        actionHistory: _actionHistory,
         setActionHistory,
     };
 
