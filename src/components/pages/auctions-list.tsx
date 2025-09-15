@@ -182,9 +182,6 @@ export function AuctionsListPage() {
                       </div>
                       <CardTitle className="text-lg">{auction.name}</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                      <p className="text-sm text-muted-foreground">Click to open and manage this auction.</p>
-                  </CardContent>
                 </Card>
               ))}
             </div>
