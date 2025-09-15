@@ -71,14 +71,9 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
             return;
         };
         
-        let resolvedValue;
-        if (value instanceof Function) {
-            const currentState = getInitialState(key, defaultValue);
-            resolvedValue = value(currentState);
-        } else {
-            resolvedValue = value;
-        }
-        
+        const currentState = getInitialState(key, defaultValue);
+        const resolvedValue = value instanceof Function ? value(currentState) : value;
+
         stateSetter(resolvedValue);
         setLocalStorageItem(`auction_${auctionId}_${key}`, resolvedValue);
     };

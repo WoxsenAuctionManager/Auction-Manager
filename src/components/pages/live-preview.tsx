@@ -1,11 +1,11 @@
+
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAuction } from "@/context/auction-context";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -14,6 +14,13 @@ import { User, Loader2 } from "lucide-react";
 
 export function LivePreviewPage() {
   const { players, currentPlayerIndex, auctionStarted } = useAuction();
+  const [isSyncing, setIsSyncing] = useState(true);
+
+  useEffect(() => {
+    // Give a moment for the initial state to sync from localStorage
+    const timer = setTimeout(() => setIsSyncing(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const currentPlayer = useMemo(
     () => players[currentPlayerIndex],
@@ -21,6 +28,14 @@ export function LivePreviewPage() {
   );
 
   const renderContent = () => {
+    if (isSyncing) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-12 w-12 animate-spin" />
+            </div>
+        )
+    }
+
     if (!auctionStarted) {
       return (
         <Card className="max-w-4xl mx-auto animate-fade-in">
