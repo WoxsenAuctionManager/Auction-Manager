@@ -176,7 +176,7 @@ export function SoldPlayersPage() {
         player.name,
         player.player_position,
         player.teamName || 'N/A',
-        `₹${player.price?.toLocaleString('en-IN') || 'N/A'}`,
+        player.price?.toString() || 'N/A',
       ]),
     });
     doc.save("sold-players.pdf");
