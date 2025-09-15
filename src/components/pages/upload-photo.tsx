@@ -11,13 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, CheckCircle, AlertCircle } from "lucide-react";
+import { UploadCloud, CheckCircle, AlertCircle, Copy } from "lucide-react";
+import { Label } from "../ui/label";
 
 export function UploadPhotoPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [downloadURL, setDownloadURL] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +50,11 @@ export function UploadPhotoPage() {
       return;
     }
 
+    setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
+    setDownloadURL(null);
+
     const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -59,13 +66,14 @@ export function UploadPhotoPage() {
       },
       (uploadError) => {
         console.error("Upload failed:", uploadError);
-        setError(`Upload failed. Please check your storage rules and try again. Error: ${uploadError.code}`);
+        setError(`Upload failed. Error: ${uploadError.code}. Please check your Firebase Storage rules and CORS configuration.`);
         toast({
           variant: "destructive",
           title: "Upload Failed",
           description: uploadError.message,
         });
         setUploadProgress(null);
+        setIsUploading(false);
       },
       () => {
         getDownloadURL(uploadTask.snapshot.ref).then((url) => {
@@ -75,10 +83,18 @@ export function UploadPhotoPage() {
             description: "Your image has been uploaded.",
           });
           setUploadProgress(null);
+          setIsUploading(false);
           setFile(null);
         });
       }
     );
+  };
+  
+  const copyToClipboard = () => {
+    if (downloadURL) {
+      navigator.clipboard.writeText(downloadURL);
+      toast({ title: "Copied!", description: "Image URL copied to clipboard." });
+    }
   };
 
   return (
@@ -96,20 +112,21 @@ export function UploadPhotoPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label htmlFor="file-upload" className="sr-only">Choose a file</label>
+            <Label htmlFor="file-upload" className="sr-only">Choose a file</Label>
             <Input 
               id="file-upload" 
               type="file" 
               onChange={handleFileChange} 
-              accept="image/*" 
+              accept="image/*"
+              disabled={isUploading} 
             />
           </div>
-          {file && (
+          {file && !isUploading && (
              <div className="text-sm text-muted-foreground">
                 Selected file: <strong>{file.name}</strong>
              </div>
           )}
-          {uploadProgress !== null && (
+          {isUploading && uploadProgress !== null && (
             <div>
               <Progress value={uploadProgress} className="w-full" />
               <p className="text-sm text-center mt-2">{Math.round(uploadProgress)}%</p>
@@ -123,9 +140,11 @@ export function UploadPhotoPage() {
            )}
           {downloadURL && (
             <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    <p>Upload complete!</p>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                        <p>Upload complete!</p>
+                    </div>
                 </div>
                 <div className="border rounded-md p-2 bg-muted overflow-hidden">
                     <Image
@@ -136,9 +155,17 @@ export function UploadPhotoPage() {
                         className="w-full h-auto object-contain rounded"
                     />
                 </div>
-                <div className="space-y-1">
-                    <label htmlFor="image-url" className="text-sm font-medium">Image URL</label>
-                    <Input id="image-url" readOnly value={downloadURL} />
+                <div className="space-y-1 relative">
+                    <Label htmlFor="image-url" className="text-sm font-medium">Image URL</Label>
+                    <Input id="image-url" readOnly value={downloadURL} className="pr-10" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-1 top-1/2 h-8 w-8"
+                      onClick={copyToClipboard}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
           )}
@@ -147,10 +174,10 @@ export function UploadPhotoPage() {
         <CardFooter>
           <Button 
             onClick={handleUpload} 
-            disabled={!file || uploadProgress !== null}
+            disabled={!file || isUploading}
             className="w-full"
           >
-            {uploadProgress !== null ? "Uploading..." : "Upload to Firebase"}
+            {isUploading ? "Uploading..." : "Upload to Firebase"}
           </Button>
         </CardFooter>
       </Card>
