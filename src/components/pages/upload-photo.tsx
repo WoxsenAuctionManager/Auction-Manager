@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useActionState } from "react";
 import Image from "next/image";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ function SubmitButton() {
 }
 
 export function UploadForm() {
-  const [state, formAction] = useFormState(uploadImageAction, { error: undefined, url: undefined });
+  const [state, formAction] = useActionState(uploadImageAction, { error: undefined, url: undefined });
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const { toast } = useToast();
 
