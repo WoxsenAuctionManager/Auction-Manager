@@ -6,7 +6,7 @@ export default function UploadPhoto() {
     <AppLayout>
       <h1 className="font-semibold text-3xl">Upload Photo</h1>
       <p className="text-muted-foreground mt-1">
-        This is where you can upload photos to Firebase Storage using Server Actions.
+        This is where you can upload photos to Firebase Storage.
       </p>
       <UploadForm />
     </AppLayout>
