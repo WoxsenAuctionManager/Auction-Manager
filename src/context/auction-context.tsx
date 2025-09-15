@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import type { Player } from '@/components/pages/players';
 import { useAuctionSelection } from './auction-selection-context';
 
@@ -15,14 +15,17 @@ interface ActionRecord {
     previousCurrentPlayerIndex: number;
 }
 
-interface AuctionContextType {
+interface AuctionState {
     players: AuctionPlayer[];
-    setPlayers: (value: React.SetStateAction<AuctionPlayer[]>) => void;
     currentPlayerIndex: number;
-    setCurrentPlayerIndex: (value: React.SetStateAction<number>) => void;
     auctionStarted: boolean;
-    setAuctionStarted: (value: React.SetStateAction<boolean>) => void;
     actionHistory: ActionRecord[];
+}
+
+interface AuctionContextType extends AuctionState {
+    setPlayers: (value: React.SetStateAction<AuctionPlayer[]>) => void;
+    setCurrentPlayerIndex: (value: React.SetStateAction<number>) => void;
+    setAuctionStarted: (value: React.SetStateAction<boolean>) => void;
     setActionHistory: (value: React.SetStateAction<ActionRecord[]>) => void;
 }
 
@@ -37,91 +40,73 @@ const setLocalStorageItem = (key: string, value: any) => {
     }
 };
 
+const getLocalStorageItem = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') return defaultValue;
+    try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : defaultValue;
+    } catch (error) {
+        console.error(`Error reading from localStorage for key: ${key}`, error);
+        return defaultValue;
+    }
+};
 
 export function AuctionProvider({ children }: { children: ReactNode }) {
     const { selectedAuction } = useAuctionSelection();
     const auctionId = selectedAuction?.id;
 
-    const getInitialState = <T,>(key: string, defaultValue: T): T => {
-        if (typeof window === 'undefined' || !auctionId) return defaultValue;
-        try {
-            const saved = localStorage.getItem(`auction_${auctionId}_${key}`);
-            return saved ? JSON.parse(saved) : defaultValue;
-        } catch (error) {
-            console.error(`Error reading from localStorage for key: auction_${auctionId}_${key}`, error);
-            return defaultValue;
+    const getInitialState = useCallback((): AuctionState => {
+        if (!auctionId) {
+            return {
+                players: [],
+                currentPlayerIndex: 0,
+                auctionStarted: false,
+                actionHistory: [],
+            };
         }
-    };
-    
-    const [_players, _setPlayers] = useState<AuctionPlayer[]>(() => getInitialState('players', []));
-    const [_currentPlayerIndex, _setCurrentPlayerIndex] = useState<number>(() => getInitialState('currentPlayerIndex', 0));
-    const [_auctionStarted, _setAuctionStarted] = useState<boolean>(() => getInitialState('auctionStarted', false));
-    const [_actionHistory, _setActionHistory] = useState<ActionRecord[]>(() => getInitialState('actionHistory', []));
-
-    const createSetter = <T,>(stateSetter: React.Dispatch<React.SetStateAction<T>>, key: string) => (value: React.SetStateAction<T>) => {
-        stateSetter(prevState => {
-            const resolvedValue = value instanceof Function ? value(prevState) : value;
-            if (auctionId) {
-                setLocalStorageItem(`auction_${auctionId}_${key}`, resolvedValue);
-            }
-            return resolvedValue;
-        });
-    };
-
-    const setPlayers = createSetter(_setPlayers, 'players');
-    const setCurrentPlayerIndex = createSetter(_setCurrentPlayerIndex, 'currentPlayerIndex');
-    const setAuctionStarted = createSetter(_setAuctionStarted, 'auctionStarted');
-    const setActionHistory = createSetter(_setActionHistory, 'actionHistory');
-
-    // Effect to reset state when auction changes
-    useEffect(() => {
-        _setPlayers(getInitialState('players', []));
-        _setCurrentPlayerIndex(getInitialState('currentPlayerIndex', 0));
-        _setAuctionStarted(getInitialState('auctionStarted', false));
-        _setActionHistory(getInitialState('actionHistory', []));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        return {
+            players: getLocalStorageItem(`auction_${auctionId}_players`, []),
+            currentPlayerIndex: getLocalStorageItem(`auction_${auctionId}_currentPlayerIndex`, 0),
+            auctionStarted: getLocalStorageItem(`auction_${auctionId}_auctionStarted`, false),
+            actionHistory: getLocalStorageItem(`auction_${auctionId}_actionHistory`, []),
+        };
     }, [auctionId]);
 
-    // Effect to listen for changes in other tabs
+    const [state, setState] = useState<AuctionState>(getInitialState);
+
+    const handleStorageChange = useCallback(() => {
+        setState(getInitialState());
+    }, [getInitialState]);
+
     useEffect(() => {
-        if (typeof window === 'undefined' || !auctionId) return;
-
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.storageArea !== localStorage) return;
-            
-            const keyMapping: { [key: string]: (value: any) => void } = {
-                [`auction_${auctionId}_players`]: _setPlayers,
-                [`auction_${auctionId}_currentPlayerIndex`]: _setCurrentPlayerIndex,
-                [`auction_${auctionId}_auctionStarted`]: _setAuctionStarted,
-                [`auction_${auctionId}_actionHistory`]: _setActionHistory,
-            };
-
-            if (event.key && event.key in keyMapping && event.newValue) {
-                try {
-                    const newValue = JSON.parse(event.newValue);
-                    keyMapping[event.key](newValue);
-                } catch (e) {
-                    console.error(`Failed to parse localStorage value for key ${event.key}`, e);
-                }
-            }
-        };
-
+        // Set initial state when component mounts or auctionId changes
+        handleStorageChange();
+        
         window.addEventListener('storage', handleStorageChange);
         return () => {
             window.removeEventListener('storage', handleStorageChange);
         };
-    }, [auctionId]);
+    }, [auctionId, handleStorageChange]);
 
+    const createSetter = <T,>(key: string) => (value: React.SetStateAction<T>) => {
+        if (!auctionId) return;
+        
+        const storageKey = `auction_${auctionId}_${key}`;
+        const currentValue = getLocalStorageItem(storageKey, state[key as keyof AuctionState]);
+        const newValue = value instanceof Function ? value(currentValue) : value;
+
+        setLocalStorageItem(storageKey, newValue);
+        
+        // Manually trigger a state update for the current tab
+        handleStorageChange();
+    };
 
     const value = {
-        players: _players,
-        setPlayers,
-        currentPlayerIndex: _currentPlayerIndex,
-        setCurrentPlayerIndex,
-        auctionStarted: _auctionStarted,
-        setAuctionStarted,
-        actionHistory: _actionHistory,
-        setActionHistory,
+        ...state,
+        setPlayers: createSetter<AuctionPlayer[]>('players'),
+        setCurrentPlayerIndex: createSetter<number>('currentPlayerIndex'),
+        setAuctionStarted: createSetter<boolean>('auctionStarted'),
+        setActionHistory: createSetter<ActionRecord[]>('actionHistory'),
     };
 
     return (
