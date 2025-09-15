@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage, auth } from "@/lib/firebase"; // Import auth
+import { storage } from "@/lib/firebase";
 import Image from "next/image";
 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, CheckCircle, AlertCircle, Copy } from "lucide-react";
 import { Label } from "../ui/label";
-import { useAuth } from "@/context/auth-context"; // Import useAuth hook
+import { useAuth } from "@/context/auth-context";
 
 export function UploadPhotoPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -21,7 +21,7 @@ export function UploadPhotoPage() {
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth(); // Get the current user
+  const { user } = useAuth();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -65,7 +65,6 @@ export function UploadPhotoPage() {
     setError(null);
     setDownloadURL(null);
 
-    // Create a unique, user-specific path in the storage bucket
     const storageRef = ref(storage, `user-uploads/${user.uid}/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -77,14 +76,11 @@ export function UploadPhotoPage() {
       },
       (uploadError) => {
         console.error("Upload failed:", uploadError);
-        // Provide a more detailed error message
-        let errorMessage = `Upload failed. Error: ${uploadError.code}.`;
+        let errorMessage = `Upload failed. Code: ${uploadError.code}.`;
         if (uploadError.code === 'storage/unauthorized') {
-            errorMessage += ' Please check your Storage Security Rules in the Firebase console.';
-        } else if (uploadError.code === 'storage/unknown') {
-            errorMessage += ' This is likely a CORS configuration issue. Please ensure your bucket is configured to allow requests from this domain.'
-        } else if (uploadError.code === 'storage/retry-limit-exceeded') {
-            errorMessage += ' Network connection error. Please check your internet connection and try again.'
+            errorMessage += ' You do not have permission to upload. Please check your Storage Security Rules.';
+        } else if (uploadError.code === 'storage/unknown' || uploadError.code === 'storage/retry-limit-exceeded') {
+            errorMessage += ' A network or CORS error occurred. Please ensure your bucket is configured to allow requests from this domain.'
         }
 
         setError(errorMessage);
