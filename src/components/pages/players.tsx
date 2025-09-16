@@ -47,13 +47,15 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2, XCircle } from "lucide-react";
+import { Search, AlertCircle, PlusCircle, User, MoreHorizontal, Trash2, Pencil, Upload, Loader2, XCircle, Columns2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
 } from "../ui/dropdown-menu";
 import { AddPlayerDialog } from "../add-player-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +72,10 @@ export interface Player {
   photoUrl?: string;
 }
 
+type ColumnVisibility = {
+  [key in keyof Omit<Player, 'id' | 'name' | 'photoUrl'>]: boolean;
+};
+
 export function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +91,12 @@ export function PlayersPage() {
   const [isImportPlayerDialogOpen, setIsImportPlayerDialogOpen] = useState(false);
   const [importedPlayers, setImportedPlayers] = useState<Omit<Player, 'id'>[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
+    contact: true,
+    department: true,
+    year: true,
+    player_position: true,
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -363,6 +375,37 @@ export function PlayersPage() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-1">
+                <Columns2 className="h-4 w-4" />
+                View
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {Object.keys(columnVisibility).map((key) => {
+                const typedKey = key as keyof ColumnVisibility;
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={key}
+                    className="capitalize"
+                    checked={columnVisibility[typedKey]}
+                    onCheckedChange={(value) =>
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [typedKey]: !!value,
+                      }))
+                    }
+                  >
+                    {key.replace('_', ' ')}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
                 <MoreHorizontal className="h-4 w-4" />
                 <span className="sr-only">More options</span>
@@ -404,17 +447,17 @@ export function PlayersPage() {
                 <TableHead className="w-[80px]">Sno.</TableHead>
                 <TableHead>Photo</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Player Position</TableHead>
+                {columnVisibility.contact && <TableHead>Contact</TableHead>}
+                {columnVisibility.department && <TableHead>Department</TableHead>}
+                {columnVisibility.year && <TableHead>Year</TableHead>}
+                {columnVisibility.player_position && <TableHead>Player Position</TableHead>}
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!user ? (
                 <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                         Please log in to view players.
                     </TableCell>
                 </TableRow>
@@ -443,10 +486,10 @@ export function PlayersPage() {
                       </Avatar>
                     </TableCell>
                     <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer font-medium">{player.name}</TableCell>
-                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.contact}</TableCell>
-                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.department}</TableCell>
-                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.year}</TableCell>
-                    <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.player_position}</TableCell>
+                    {columnVisibility.contact && <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.contact}</TableCell>}
+                    {columnVisibility.department && <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.department}</TableCell>}
+                    {columnVisibility.year && <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.year}</TableCell>}
+                    {columnVisibility.player_position && <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{player.player_position}</TableCell>}
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -474,7 +517,7 @@ export function PlayersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={selectionMode ? 9: 8} className="text-center">
+                  <TableCell colSpan={Object.values(columnVisibility).filter(Boolean).length + 4 + (selectionMode ? 1:0)} className="text-center">
                     No players found.
                   </TableCell>
                 </TableRow>
