@@ -485,13 +485,8 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
 
         newPlayers[index] = newPlayers[swapIndex];
         newPlayers[swapIndex] = playerToMove;
-
-        // Also update currentPlayerIndex if the currently auctioned player is moved
-        if(index === currentPlayerIndex) {
-            setCurrentPlayerIndex(swapIndex);
-        } else if (swapIndex === currentPlayerIndex) {
-            setCurrentPlayerIndex(index);
-        }
+        
+        setCurrentPlayerIndex(0);
 
         return newPlayers;
     });
@@ -874,6 +869,3 @@ const handleRemoveAllPlayers = async () => {
     </>
   );
 }
-
-    
-    
