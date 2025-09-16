@@ -20,7 +20,7 @@ export default function CorsFixPage() {
     }
   }, []);
 
-  const bucketName = "studio-2256766213-a72a9.appspot.com";
+  const bucketName = "your-firebase-storage-bucket-name";
   const corsConfigContent = `[
   {
     "origin": ["${origin}"],
