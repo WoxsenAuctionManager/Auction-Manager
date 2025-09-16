@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -11,9 +12,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Loader2, Expand, Shrink } from "lucide-react";
 import { Button } from "../ui/button";
+import { useAuctionSelection } from "@/context/auction-selection-context";
 
 export function LivePreviewPage() {
   const { players, currentPlayerIndex, auctionStarted, columnLabels } = useAuction();
+  const { selectedAuction } = useAuctionSelection();
   const [isSyncing, setIsSyncing] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -59,7 +62,7 @@ export function LivePreviewPage() {
 
     if (!auctionStarted) {
       return (
-        <Card className="max-w-5xl mx-auto animate-fade-in">
+        <Card className="max-w-5xl mx-auto animate-fade-in w-full min-h-[550px] flex flex-col justify-center">
           <CardHeader>
             <CardTitle className="text-center text-5xl">
               Welcome to the Auction
@@ -78,7 +81,7 @@ export function LivePreviewPage() {
 
     if (!currentPlayer) {
       return (
-        <Card className="max-w-5xl mx-auto animate-fade-in">
+        <Card className="max-w-5xl mx-auto animate-fade-in w-full min-h-[550px] flex flex-col justify-center">
           <CardHeader>
             <CardTitle className="text-center text-5xl">
               Auction Finished
@@ -96,7 +99,7 @@ export function LivePreviewPage() {
     }
 
     return (
-      <Card className="max-w-5xl mx-auto animate-fade-in w-full">
+      <Card className="max-w-5xl mx-auto animate-fade-in w-full min-h-[550px]">
         <CardHeader>
           <CardTitle className="text-center text-6xl font-bold tracking-tight">
             {currentPlayer.name}
@@ -131,7 +134,7 @@ export function LivePreviewPage() {
   };
 
   return (
-    <div className="flex items-center justify-center h-full bg-background p-8 relative">
+    <div className="flex flex-col items-center justify-center h-full bg-background p-8 relative">
         <Button 
             variant="outline" 
             size="icon" 
@@ -141,7 +144,12 @@ export function LivePreviewPage() {
             {isFullscreen ? <Shrink className="h-5 w-5" /> : <Expand className="h-5 w-5" />}
             <span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
         </Button>
-      {renderContent()}
+        {selectedAuction?.name && (
+            <h1 className="text-4xl font-bold tracking-tight text-center mb-8">
+                {selectedAuction.name}
+            </h1>
+        )}
+        {renderContent()}
     </div>
   );
 }
