@@ -17,12 +17,11 @@ import { useAuctionSelection } from "@/context/auction-selection-context";
 export function LivePreviewPage() {
   const { players, currentPlayerIndex, auctionStarted, columnLabels } = useAuction();
   const { selectedAuction } = useAuctionSelection();
-  const [isSyncing, setIsSyncing] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    // Give a moment for the initial state to sync from localStorage
-    const timer = setTimeout(() => setIsSyncing(false), 500);
+    setIsClient(true);
 
     const handleFullscreenChange = () => {
         setIsFullscreen(!!document.fullscreenElement);
@@ -31,7 +30,6 @@ export function LivePreviewPage() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return () => {
-        clearTimeout(timer);
         document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
@@ -52,9 +50,9 @@ export function LivePreviewPage() {
   };
 
   const renderContent = () => {
-    if (isSyncing) {
+    if (!isClient) {
         return (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full min-h-[550px]">
                 <Loader2 className="h-12 w-12 animate-spin" />
             </div>
         )
@@ -144,7 +142,7 @@ export function LivePreviewPage() {
             {isFullscreen ? <Shrink className="h-5 w-5" /> : <Expand className="h-5 w-5" />}
             <span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
         </Button>
-        {selectedAuction?.name && (
+        {isClient && selectedAuction?.name && (
             <h1 className="text-4xl font-bold tracking-tight text-center mb-8">
                 {selectedAuction.name}
             </h1>
