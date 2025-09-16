@@ -45,7 +45,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2 } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2, MoreHorizontal } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -59,6 +59,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -633,7 +639,7 @@ const handleRemoveAllPlayers = async () => {
                 <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col md:flex-row items-center gap-8">
-                <div className="relative h-48 w-48">
+                <div className="relative h-48 w-48 rounded-lg overflow-hidden">
                     <Avatar className="h-full w-full border-4 border-primary shadow-lg rounded-lg">
                         <AvatarImage
                             src={currentPlayer.photoUrl}
@@ -785,14 +791,25 @@ const handleRemoveAllPlayers = async () => {
                                         >
                                             <ArrowDown className="h-4 w-4" />
                                         </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive"
-                                            onClick={() => setPlayerToRemove(player)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    onClick={() => setPlayerToRemove(player)}
+                                                    className="text-destructive"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                   </TableCell>
                               </TableRow>
@@ -858,4 +875,5 @@ const handleRemoveAllPlayers = async () => {
   );
 }
 
+    
     
