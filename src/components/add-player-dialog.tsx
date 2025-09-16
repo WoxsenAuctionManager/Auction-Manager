@@ -30,16 +30,10 @@ import { Loader2 } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import type { Player } from "./pages/players";
 import { Textarea } from "./ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { convertGoogleDriveUrl } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { useAuctionSelection } from "@/context/auction-selection-context";
+import { Combobox } from "./ui/combobox";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -68,6 +62,25 @@ const defaultFormValues = {
   player_position: "",
   photoUrl: "",
 };
+
+const departmentOptions = [
+    { value: "Student", label: "Student" },
+    { value: "Staff", label: "Staff" },
+];
+  
+const yearOptions = [
+    { value: "1st Year", label: "1st Year" },
+    { value: "2nd Year", label: "2nd Year" },
+    { value: "3rd Year", label: "3rd Year" },
+    { value: "4th Year", label: "4th Year" },
+];
+  
+const positionOptions = [
+    { value: "Forward", label: "Forward" },
+    { value: "Mid Fielder", label: "Mid Fielder" },
+    { value: "Defender", label: "Defender" },
+    { value: "Goal Keeper", label: "Goal Keeper" },
+];
 
 export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpdated, playerToEdit }: AddPlayerDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
@@ -201,44 +214,34 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   control={form.control}
                   name="department"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Department</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a department" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Student">Student</SelectItem>
-                          <SelectItem value="Staff">Staff</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Combobox
+                        options={departmentOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select a department"
+                        searchPlaceholder="Search departments..."
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
                   name="year"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Year</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={watchedDepartment === 'Staff'}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a year" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1st Year">1st Year</SelectItem>
-                          <SelectItem value="2nd Year">2nd Year</SelectItem>
-                          <SelectItem value="3rd Year">3rd Year</SelectItem>
-                          <SelectItem value="4th Year">4th Year</SelectItem>
-                          {watchedDepartment !== 'Student' && <SelectItem value="NA">NA</SelectItem>}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Year</FormLabel>
+                        <Combobox
+                            options={watchedDepartment === 'Staff' ? [{value: 'NA', label: 'NA'}] : yearOptions}
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select a year"
+                            searchPlaceholder="Search years..."
+                            disabled={watchedDepartment === 'Staff'}
+                        />
+                        <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -246,21 +249,15 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   control={form.control}
                   name="player_position"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Player Position</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a position" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Forward">Forward</SelectItem>
-                          <SelectItem value="Mid Fielder">Mid Fielder</SelectItem>
-                          <SelectItem value="Defender">Defender</SelectItem>
-                          <SelectItem value="Goal Keeper">Goal Keeper</SelectItem>
-                        </SelectContent>
-                      </Select>
+                       <Combobox
+                            options={positionOptions}
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select a position"
+                            searchPlaceholder="Search positions..."
+                        />
                       <FormMessage />
                     </FormItem>
                   )}
