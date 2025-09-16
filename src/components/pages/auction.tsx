@@ -81,15 +81,16 @@ import { PlayerProfileDialog } from "../player-profile-dialog";
 type AuctionPlayer = Player & { price?: number; teamId?: string };
 
 function SharePopover() {
+    const { selectedAuction } = useAuctionSelection();
     const [livePreviewUrl, setLivePreviewUrl] = useState('');
     const [hasCopied, setHasCopied] = useState(false);
     const { toast } = useToast();
   
     useEffect(() => {
-      if (typeof window !== 'undefined') {
-        setLivePreviewUrl(`${window.location.origin}/live-preview`);
+      if (typeof window !== 'undefined' && selectedAuction) {
+        setLivePreviewUrl(`${window.location.origin}/live-preview/${selectedAuction.id}`);
       }
-    }, []);
+    }, [selectedAuction]);
   
     const copyToClipboard = () => {
       navigator.clipboard.writeText(livePreviewUrl);
@@ -119,7 +120,7 @@ function SharePopover() {
                 {hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <Link href="/live-preview" target="_blank" className="w-full">
+            <Link href={livePreviewUrl} target="_blank" className="w-full">
               <Button variant="secondary" className="w-full">
                 <ExternalLink className="mr-2" /> Go Live
               </Button>

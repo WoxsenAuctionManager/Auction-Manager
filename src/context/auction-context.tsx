@@ -5,6 +5,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import type { Player } from '@/components/pages/players';
 import { useAuctionSelection } from './auction-selection-context';
 import type { ColumnLabels } from '@/components/pages/players';
+import { useAuth } from './auth-context';
 
 type AuctionPlayer = Player & { price?: number; teamId?: string; status?: 'sold' | 'unsold' | 'queued' };
 
@@ -60,9 +61,11 @@ const getLocalStorageItem = <T,>(key: string, defaultValue: T): T => {
 
 export function AuctionProvider({ children }: { children: ReactNode }) {
     const { selectedAuction } = useAuctionSelection();
+    const { user } = useAuth();
     const auctionId = selectedAuction?.id;
 
     const getInitialState = useCallback(() => {
+        const key = `auction_${auctionId}`;
         if (!auctionId) {
             return {
                 players: [],
@@ -72,59 +75,36 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
                 columnLabels: defaultColumnLabels
             };
         }
+        const savedState = getLocalStorageItem(key, {});
         return {
-            players: getLocalStorageItem(`auction_${auctionId}_players`, []),
-            currentPlayerIndex: getLocalStorageItem(`auction_${auctionId}_currentPlayerIndex`, 0),
-            auctionStarted: getLocalStorageItem(`auction_${auctionId}_auctionStarted`, false),
-            actionHistory: getLocalStorageItem(`auction_${auctionId}_actionHistory`, []),
-            columnLabels: getLocalStorageItem(`auction_${auctionId}_columnLabels`, defaultColumnLabels)
+            players: savedState.players || [],
+            currentPlayerIndex: savedState.currentPlayerIndex || 0,
+            auctionStarted: savedState.auctionStarted || false,
+            actionHistory: savedState.actionHistory || [],
+            columnLabels: savedState.columnLabels || defaultColumnLabels,
         };
     }, [auctionId]);
-
-    const [players, setPlayers] = useState<AuctionPlayer[]>(() => getInitialState().players);
-    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(() => getInitialState().currentPlayerIndex);
-    const [auctionStarted, setAuctionStarted] = useState<boolean>(() => getInitialState().auctionStarted);
-    const [actionHistory, setActionHistory] = useState<ActionRecord[]>(() => getInitialState().actionHistory);
-    const [columnLabels, setColumnLabels] = useState<ColumnLabels>(() => getInitialState().columnLabels);
+    
+    const [state, setState] = useState(getInitialState);
 
     useEffect(() => {
-        const initialState = getInitialState();
-        setPlayers(initialState.players);
-        setCurrentPlayerIndex(initialState.currentPlayerIndex);
-        setAuctionStarted(initialState.auctionStarted);
-        setActionHistory(initialState.actionHistory);
-        setColumnLabels(initialState.columnLabels);
+        setState(getInitialState());
     }, [auctionId, getInitialState]);
     
     useEffect(() => {
-        if(auctionId) localStorage.setItem(`auction_${auctionId}_players`, JSON.stringify(players));
-    }, [players, auctionId]);
-    
-    useEffect(() => {
-        if(auctionId) localStorage.setItem(`auction_${auctionId}_currentPlayerIndex`, JSON.stringify(currentPlayerIndex));
-    }, [currentPlayerIndex, auctionId]);
-
-    useEffect(() => {
-        if(auctionId) localStorage.setItem(`auction_${auctionId}_auctionStarted`, JSON.stringify(auctionStarted));
-    }, [auctionStarted, auctionId]);
-
-    useEffect(() => {
-        if(auctionId) localStorage.setItem(`auction_${auctionId}_actionHistory`, JSON.stringify(actionHistory));
-    }, [actionHistory, auctionId]);
-
-    useEffect(() => {
-        if(auctionId) localStorage.setItem(`auction_${auctionId}_columnLabels`, JSON.stringify(columnLabels));
-    }, [columnLabels, auctionId]);
+        if(auctionId && typeof window !== 'undefined') {
+            const key = `auction_${auctionId}`;
+            localStorage.setItem(key, JSON.stringify(state));
+            if (user?.uid) {
+                localStorage.setItem(`${key}_owner`, user.uid);
+            }
+        }
+    }, [state, auctionId, user]);
 
     useEffect(() => {
         const handleStorageChange = (event: StorageEvent) => {
-            if (auctionId && event.key?.startsWith(`auction_${auctionId}`)) {
-                const initialState = getInitialState();
-                setPlayers(initialState.players);
-                setCurrentPlayerIndex(initialState.currentPlayerIndex);
-                setAuctionStarted(initialState.auctionStarted);
-                setActionHistory(initialState.actionHistory);
-                setColumnLabels(initialState.columnLabels);
+            if (auctionId && event.key === `auction_${auctionId}`) {
+                setState(getInitialState());
             }
         };
 
@@ -136,12 +116,25 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
     }, [auctionId, getInitialState]);
 
 
+    const setPlayers = (value: React.SetStateAction<AuctionPlayer[]>) => {
+        setState(s => ({...s, players: typeof value === 'function' ? value(s.players) : value }));
+    };
+    const setCurrentPlayerIndex = (value: React.SetStateAction<number>) => {
+        setState(s => ({...s, currentPlayerIndex: typeof value === 'function' ? value(s.currentPlayerIndex) : value }));
+    }
+    const setAuctionStarted = (value: React.SetStateAction<boolean>) => {
+        setState(s => ({...s, auctionStarted: typeof value === 'function' ? value(s.auctionStarted) : value }));
+    }
+    const setActionHistory = (value: React.SetStateAction<ActionRecord[]>) => {
+        setState(s => ({...s, actionHistory: typeof value === 'function' ? value(s.actionHistory) : value }));
+    }
+    const setColumnLabels = (value: React.SetStateAction<ColumnLabels>) => {
+        setState(s => ({...s, columnLabels: typeof value === 'function' ? value(s.columnLabels) : value }));
+    }
+
+
     const value = {
-        players,
-        currentPlayerIndex,
-        auctionStarted,
-        actionHistory,
-        columnLabels,
+        ...state,
         setPlayers,
         setCurrentPlayerIndex,
         setAuctionStarted,

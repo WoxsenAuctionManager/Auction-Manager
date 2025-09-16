@@ -1,8 +1,7 @@
 
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { useAuction } from "@/context/auction-context";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -12,17 +11,33 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Loader2, Expand, Shrink } from "lucide-react";
 import { Button } from "../ui/button";
-import { useAuctionSelection } from "@/context/auction-selection-context";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-export function LivePreviewPage() {
-  const { players, currentPlayerIndex, auctionStarted, columnLabels } = useAuction();
-  const { selectedAuction } = useAuctionSelection();
+// This is a simplified interface for what we expect from localStorage
+// We can't import the full context here as it's not needed for the public view
+interface AuctionState {
+  players: any[];
+  currentPlayerIndex: number;
+  auctionStarted: boolean;
+  columnLabels: { [key: string]: string };
+}
+interface AuctionDetails {
+    name: string;
+    owner: string;
+}
+
+export function LivePreviewPage({ auctionId }: { auctionId: string }) {
+  const [auctionState, setAuctionState] = useState<AuctionState | null>(null);
+  const [auctionDetails, setAuctionDetails] = useState<AuctionDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-
+    
     const handleFullscreenChange = () => {
         setIsFullscreen(!!document.fullscreenElement);
     };
@@ -33,12 +48,59 @@ export function LivePreviewPage() {
         document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
-
-  const currentPlayer = useMemo(
-    () => players[currentPlayerIndex],
-    [players, currentPlayerIndex]
-  );
   
+  useEffect(() => {
+    if (!auctionId || typeof window === 'undefined') return;
+
+    const handleStorageChange = () => {
+        try {
+            const key = `auction_${auctionId}`;
+            const data = localStorage.getItem(key);
+            if (data) {
+                const parsedData = JSON.parse(data);
+                setAuctionState(parsedData);
+            }
+            setLoading(false);
+        } catch (e) {
+            console.error("Error reading from localStorage", e);
+            setError("Could not load auction data.");
+            setLoading(false);
+        }
+    };
+    
+    handleStorageChange(); // Initial load
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also fetch auction details like name
+    const ownerId = localStorage.getItem(`auction_${auctionId}_owner`);
+    if(ownerId) {
+        const auctionDocRef = doc(db, "users", ownerId, "auctions", auctionId);
+        const unsubscribe = onSnapshot(auctionDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setAuctionDetails(docSnap.data() as AuctionDetails);
+            } else {
+                setError("Auction not found.");
+            }
+        });
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            unsubscribe();
+        };
+    } else {
+        // Fallback for finding owner if not in local storage (might be slow)
+        // This part is complex without a dedicated public collection.
+        // For now, we'll rely on the auctioneer's browser to sync owner.
+    }
+
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+
+  }, [auctionId]);
+
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
@@ -50,7 +112,7 @@ export function LivePreviewPage() {
   };
 
   const renderContent = () => {
-    if (!isClient) {
+    if (!isClient || loading) {
         return (
             <div className="flex items-center justify-center h-full min-h-[550px]">
                 <Loader2 className="h-12 w-12 animate-spin" />
@@ -58,7 +120,15 @@ export function LivePreviewPage() {
         )
     }
 
-    if (!auctionStarted) {
+    if (error) {
+        return (
+          <Card className="max-w-5xl mx-auto animate-fade-in w-full min-h-[550px] flex flex-col justify-center">
+            <CardHeader><CardTitle className="text-center text-3xl text-destructive">{error}</CardTitle></CardHeader>
+          </Card>
+        );
+    }
+    
+    if (!auctionState || !auctionState.auctionStarted) {
       return (
         <Card className="max-w-5xl mx-auto animate-fade-in w-full min-h-[550px] flex flex-col justify-center">
           <CardHeader>
@@ -77,6 +147,9 @@ export function LivePreviewPage() {
       );
     }
 
+    const currentPlayer = auctionState.players[auctionState.currentPlayerIndex];
+    const columnLabels = auctionState.columnLabels;
+    
     if (!currentPlayer) {
       return (
         <Card className="max-w-5xl mx-auto animate-fade-in w-full min-h-[550px] flex flex-col justify-center">
@@ -132,7 +205,7 @@ export function LivePreviewPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-background p-8 relative">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-8 relative">
         <Button 
             variant="outline" 
             size="icon" 
@@ -142,9 +215,9 @@ export function LivePreviewPage() {
             {isFullscreen ? <Shrink className="h-5 w-5" /> : <Expand className="h-5 w-5" />}
             <span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
         </Button>
-        {isClient && selectedAuction?.name && (
+        {isClient && auctionDetails?.name && (
             <h1 className="text-4xl font-bold tracking-tight text-center mb-8">
-                {selectedAuction.name}
+                {auctionDetails.name}
             </h1>
         )}
         {renderContent()}
