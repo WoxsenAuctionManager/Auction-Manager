@@ -169,7 +169,13 @@ export function UnsoldPlayersPage() {
     doc.text("Unsold Players", 14, 16);
     autoTable(doc, {
       startY: 20,
-      head: [['Name', 'Contact', 'Department', 'Year', 'Position']],
+      head: [[
+        columnLabels.name,
+        columnLabels.contact,
+        columnLabels.department,
+        columnLabels.year,
+        columnLabels.player_position,
+      ]],
       body: filteredPlayers.map(player => [
         player.name,
         player.contact,
