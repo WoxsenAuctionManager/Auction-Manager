@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -10,22 +9,44 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2 } from "lucide-react";
+import { User, Loader2, Expand, Shrink } from "lucide-react";
+import { Button } from "../ui/button";
 
 export function LivePreviewPage() {
   const { players, currentPlayerIndex, auctionStarted, columnLabels } = useAuction();
   const [isSyncing, setIsSyncing] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     // Give a moment for the initial state to sync from localStorage
     const timer = setTimeout(() => setIsSyncing(false), 500);
-    return () => clearTimeout(timer);
+
+    const handleFullscreenChange = () => {
+        setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+        clearTimeout(timer);
+        document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   const currentPlayer = useMemo(
     () => players[currentPlayerIndex],
     [players, currentPlayerIndex]
   );
+  
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+  };
 
   const renderContent = () => {
     if (isSyncing) {
@@ -75,23 +96,25 @@ export function LivePreviewPage() {
     }
 
     return (
-      <Card className="max-w-5xl mx-auto animate-fade-in">
+      <Card className="max-w-5xl mx-auto animate-fade-in w-full">
         <CardHeader>
           <CardTitle className="text-center text-6xl font-bold tracking-tight">
             {currentPlayer.name}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row items-center gap-12 pt-8">
-          <Avatar className="h-80 w-80 border-4 border-primary shadow-lg rounded-lg">
-            <AvatarImage
-              src={currentPlayer.photoUrl}
-              alt={currentPlayer.name}
-              className="object-contain h-full w-full"
-            />
-            <AvatarFallback className="text-9xl rounded-lg">
-              <User />
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative h-80 w-80">
+            <Avatar className="h-full w-full border-4 border-primary shadow-lg rounded-lg">
+                <AvatarImage
+                src={currentPlayer.photoUrl}
+                alt={currentPlayer.name}
+                className="object-contain h-full w-full"
+                />
+                <AvatarFallback className="text-9xl rounded-lg">
+                <User />
+                </AvatarFallback>
+            </Avatar>
+          </div>
           <div className="w-full space-y-6">
             <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-3xl">
               <p className="font-semibold text-muted-foreground">{columnLabels.department}</p>
@@ -108,7 +131,16 @@ export function LivePreviewPage() {
   };
 
   return (
-    <div className="flex items-center justify-center h-full bg-background p-8">
+    <div className="flex items-center justify-center h-full bg-background p-8 relative">
+        <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={toggleFullscreen} 
+            className="absolute top-4 right-4 z-10"
+        >
+            {isFullscreen ? <Shrink className="h-5 w-5" /> : <Expand className="h-5 w-5" />}
+            <span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+        </Button>
       {renderContent()}
     </div>
   );
