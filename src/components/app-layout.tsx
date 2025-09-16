@@ -84,7 +84,7 @@ export function AppLayout({ children, showNav = true }: { children: React.ReactN
         </div>
       )}
       <div className={`flex flex-col min-h-screen ${showNav ? 'md:pl-[220px] lg:pl-[280px]' : ''}`}>
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-10">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           {showNav && (
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
