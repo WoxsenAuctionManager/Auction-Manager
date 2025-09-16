@@ -45,6 +45,7 @@ import { EditSoldPlayerDialog } from "../edit-sold-player-dialog";
 import { convertGoogleDriveUrl } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { PlayerProfileDialog } from "../player-profile-dialog";
 
 interface SoldPlayer extends Player {
   price?: number;
@@ -61,6 +62,7 @@ export function SoldPlayersPage() {
   const [playerToEdit, setPlayerToEdit] = useState<SoldPlayer | null>(null);
   const [playerToRemove, setPlayerToRemove] = useState<SoldPlayer | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
@@ -243,7 +245,7 @@ export function SoldPlayersPage() {
                   </TableRow>
                 ) : filteredPlayers.length > 0 ? (
                   filteredPlayers.map((player, index) => (
-                    <TableRow key={player.id}>
+                    <TableRow key={player.id} onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>
                         <Avatar>
@@ -275,7 +277,7 @@ export function SoldPlayersPage() {
                         </div>
                       </TableCell>
                       <TableCell>&#8377;{player.price?.toLocaleString('en-IN') || 'N/A'}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -312,6 +314,12 @@ export function SoldPlayersPage() {
           </CardContent>
         </Card>
       </div>
+
+      <PlayerProfileDialog
+        player={selectedPlayer}
+        open={!!selectedPlayer}
+        onOpenChange={() => setSelectedPlayer(null)}
+      />
 
       {playerToEdit && (
         <EditSoldPlayerDialog

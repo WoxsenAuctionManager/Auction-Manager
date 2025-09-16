@@ -42,6 +42,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { PlayerProfileDialog } from "../player-profile-dialog";
 
 
 export function UnsoldPlayersPage() {
@@ -52,6 +53,7 @@ export function UnsoldPlayersPage() {
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [isRemoveAllDialogOpen, setIsRemoveAllDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
@@ -249,7 +251,7 @@ export function UnsoldPlayersPage() {
                 </TableRow>
               ) : filteredPlayers.length > 0 ? (
                 filteredPlayers.map((player, index) => (
-                  <TableRow key={player.id}>
+                  <TableRow key={player.id} onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
                       <Avatar>
@@ -269,7 +271,7 @@ export function UnsoldPlayersPage() {
                     <TableCell>{player.department}</TableCell>
                     <TableCell>{player.year}</TableCell>
                     <TableCell>{player.player_position}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isProcessing}>
@@ -301,6 +303,12 @@ export function UnsoldPlayersPage() {
           </Table>
         </CardContent>
       </Card>
+
+       <PlayerProfileDialog
+        player={selectedPlayer}
+        open={!!selectedPlayer}
+        onOpenChange={() => setSelectedPlayer(null)}
+      />
       
       <AlertDialog open={!!playerToRemove} onOpenChange={(open) => !open && setPlayerToRemove(null)}>
         <AlertDialogContent>

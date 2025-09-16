@@ -69,6 +69,7 @@ import {
 } from "@/components/ui/table";
 import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 import { useAuction } from "@/context/auction-context";
+import { PlayerProfileDialog } from "../player-profile-dialog";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string };
 
@@ -141,6 +142,7 @@ export function AuctionPage() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
 
@@ -557,10 +559,18 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
                 <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col md:flex-row items-center gap-8">
-                <Avatar className="h-48 w-48 border-4 border-primary rounded-lg">
-                    <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} className="object-contain h-full w-full" />
-                    <AvatarFallback className="text-6xl rounded-lg"><User /></AvatarFallback>
-                </Avatar>
+                <div className="relative h-48 w-48">
+                    <Avatar className="h-full w-full border-4 border-primary shadow-lg rounded-lg">
+                        <AvatarImage
+                            src={currentPlayer.photoUrl}
+                            alt={currentPlayer.name}
+                            className="object-contain h-full w-full"
+                        />
+                        <AvatarFallback className="text-6xl rounded-lg">
+                            <User />
+                        </AvatarFallback>
+                    </Avatar>
+                </div>
                 <div className="w-full space-y-3">
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
                         <p className="font-medium text-muted-foreground">{columnLabels.department}</p>
@@ -668,7 +678,7 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
                   <TableBody>
                       {players.length > 0 ? (
                           players.map((player, index) => (
-                              <TableRow key={player.id}>
+                              <TableRow key={player.id} className="cursor-pointer" onClick={() => setSelectedPlayer(player)}>
                                   <TableCell>{index + 1}</TableCell>
                                   <TableCell>
                                       <Avatar>
@@ -678,7 +688,7 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
                                   </TableCell>
                                   <TableCell>{player.name}</TableCell>
                                   <TableCell>{player.player_position}</TableCell>
-                                  <TableCell className="text-center">
+                                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center justify-center gap-2">
                                         <Button
                                             variant="ghost"
@@ -718,6 +728,11 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
         onPlayersAdded={handlePlayersAddedToAuction}
         playersInQueue={players}
     />
+     <PlayerProfileDialog
+        player={selectedPlayer}
+        open={!!selectedPlayer}
+        onOpenChange={() => setSelectedPlayer(null)}
+      />
     </>
   );
 }
