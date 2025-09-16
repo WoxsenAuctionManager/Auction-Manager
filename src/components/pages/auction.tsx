@@ -64,6 +64,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -807,12 +808,27 @@ const handleRemoveAllPlayers = async () => {
                                                 Move to Top
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
+                                                onClick={() => movePlayer(index, 'up')}
+                                                disabled={index === 0}
+                                            >
+                                                <ArrowUp className="mr-2 h-4 w-4" />
+                                                Move Up
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => movePlayer(index, 'down')}
+                                                disabled={index === players.length - 1}
+                                            >
+                                                <ArrowDown className="mr-2 h-4 w-4" />
+                                                Move Down
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
                                                 onClick={() => moveToBottom(index)}
                                                 disabled={index === players.length - 1}
                                             >
                                                 <ArrowDownToLine className="mr-2 h-4 w-4" />
                                                 Move to Bottom
                                             </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem
                                                 onClick={() => setPlayerToRemove(player)}
                                                 className="text-destructive"
@@ -885,5 +901,3 @@ const handleRemoveAllPlayers = async () => {
     </>
   );
 }
-
-    
