@@ -23,30 +23,32 @@ export function PlayerProfileDialog({ player, open, onOpenChange }: PlayerProfil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Player Profile</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center gap-6 py-6">
-          <Avatar className="h-40 w-40 border-4 border-primary">
-            <AvatarImage src={player.photoUrl} alt={player.name} />
-            <AvatarFallback className="text-6xl">
-              <User />
-            </AvatarFallback>
-          </Avatar>
-          <div className="w-full space-y-4 text-center">
-             <h2 className="text-3xl font-bold tracking-tight">{player.name}</h2>
-             <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-left mx-auto max-w-xs text-base">
-                <p className="font-medium text-muted-foreground">Contact</p>
+        <div className="grid md:grid-cols-2 gap-8 items-center py-6">
+          <div className="flex justify-center">
+            <Avatar className="h-64 w-64 border-4 border-primary">
+              <AvatarImage src={player.photoUrl} alt={player.name} className="object-cover"/>
+              <AvatarFallback className="text-8xl">
+                <User />
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <div className="w-full space-y-6 text-center md:text-left">
+             <h2 className="text-4xl font-bold tracking-tight">{player.name}</h2>
+             <div className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-4 text-lg">
+                <p className="font-semibold text-muted-foreground">Contact</p>
                 <p>{player.contact}</p>
 
-                <p className="font-medium text-muted-foreground">Department</p>
+                <p className="font-semibold text-muted-foreground">Department</p>
                 <p>{player.department}</p>
                 
-                <p className="font-medium text-muted-foreground">Year</p>
+                <p className="font-semibold text-muted-foreground">Year</p>
                 <p>{player.year}</p>
 
-                <p className="font-medium text-muted-foreground">Position</p>
+                <p className="font-semibold text-muted-foreground">Position</p>
                 <p>{player.player_position}</p>
              </div>
           </div>
