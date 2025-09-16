@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -18,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Player } from "./pages/players";
+import type { Player, ColumnLabels } from "./pages/players";
 import { Loader2 } from "lucide-react";
 
 interface ImportPlayersDialogProps {
@@ -27,6 +28,7 @@ interface ImportPlayersDialogProps {
   onConfirmImport: () => void;
   players: Omit<Player, "id">[];
   isImporting: boolean;
+  columnLabels: ColumnLabels;
 }
 
 export function ImportPlayersDialog({
@@ -35,6 +37,7 @@ export function ImportPlayersDialog({
   onConfirmImport,
   players,
   isImporting,
+  columnLabels,
 }: ImportPlayersDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,12 +53,12 @@ export function ImportPlayersDialog({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Position</TableHead>
-                <TableHead>Photo URL</TableHead>
+                <TableHead>{columnLabels.name}</TableHead>
+                <TableHead>{columnLabels.contact}</TableHead>
+                <TableHead>{columnLabels.department}</TableHead>
+                <TableHead>{columnLabels.year}</TableHead>
+                <TableHead>{columnLabels.player_position}</TableHead>
+                <TableHead>{columnLabels.photo}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -223,18 +223,20 @@ export function PlayersPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet);
-        
+
         const newPlayers = json.map((row: any) => ({
-          name: row.Name || '',
-          contact: String(row.Contact || ''),
-          department: row.Department || '',
-          year: String(row.Year || ''),
-          player_position: row.Position || '',
-          photoUrl: row['Photo URL'] ? convertGoogleDriveUrl(row['Photo URL']) : '',
+          name: row[columnLabels.name] || "",
+          contact: String(row[columnLabels.contact] || ""),
+          department: row[columnLabels.department] || "",
+          year: String(row[columnLabels.year] || ""),
+          player_position: row[columnLabels.player_position] || "",
+          photoUrl: row[columnLabels.photo]
+            ? convertGoogleDriveUrl(row[columnLabels.photo])
+            : "",
         }));
 
         setImportedPlayers(newPlayers);
@@ -242,7 +244,7 @@ export function PlayersPage() {
       };
       reader.readAsArrayBuffer(file);
     }
-     if(fileInputRef.current) {
+    if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
@@ -363,6 +365,7 @@ export function PlayersPage() {
         onConfirmImport={handleConfirmImport}
         players={importedPlayers}
         isImporting={isImporting}
+        columnLabels={columnLabels}
       />
       
       <EditColumnNamesDialog
