@@ -557,9 +557,9 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
                 <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col md:flex-row items-center gap-8">
-                <Avatar className="h-48 w-48 border-4 border-primary">
-                    <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} />
-                    <AvatarFallback className="text-6xl"><User /></AvatarFallback>
+                <Avatar className="h-48 w-48 border-4 border-primary rounded-lg">
+                    <AvatarImage src={currentPlayer.photoUrl} alt={currentPlayer.name} className="object-cover" />
+                    <AvatarFallback className="text-6xl rounded-lg"><User /></AvatarFallback>
                 </Avatar>
                 <div className="w-full space-y-3">
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">

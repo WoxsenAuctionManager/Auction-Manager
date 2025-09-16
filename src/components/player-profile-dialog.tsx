@@ -32,9 +32,9 @@ export function PlayerProfileDialog({ player, open, onOpenChange }: PlayerProfil
         </DialogHeader>
         <div className="grid md:grid-cols-2 gap-12 items-center py-8">
           <div className="flex justify-center">
-            <Avatar className="h-80 w-80 border-4 border-primary">
+            <Avatar className="h-80 w-80 border-4 border-primary rounded-lg">
               <AvatarImage src={player.photoUrl} alt={player.name} className="object-cover"/>
-              <AvatarFallback className="text-9xl">
+              <AvatarFallback className="text-9xl rounded-lg">
                 <User />
               </AvatarFallback>
             </Avatar>

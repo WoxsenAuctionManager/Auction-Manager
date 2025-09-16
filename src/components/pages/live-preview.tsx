@@ -82,13 +82,13 @@ export function LivePreviewPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row items-center gap-12 pt-8">
-          <Avatar className="h-80 w-80 border-4 border-primary shadow-lg">
+          <Avatar className="h-80 w-80 border-4 border-primary shadow-lg rounded-lg">
             <AvatarImage
               src={currentPlayer.photoUrl}
               alt={currentPlayer.name}
               className="object-cover"
             />
-            <AvatarFallback className="text-9xl">
+            <AvatarFallback className="text-9xl rounded-lg">
               <User />
             </AvatarFallback>
           </Avatar>
