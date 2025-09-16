@@ -86,7 +86,7 @@ export function LivePreviewPage() {
             <AvatarImage
               src={currentPlayer.photoUrl}
               alt={currentPlayer.name}
-              className="object-cover"
+              className="object-contain h-full w-full"
             />
             <AvatarFallback className="text-9xl rounded-lg">
               <User />
