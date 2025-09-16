@@ -45,7 +45,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2, MoreHorizontal, ArrowUpToLine, ArrowDownToLine } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2, MoreHorizontal, ArrowUpToLine, ArrowDownToLine, Search } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -152,6 +152,7 @@ export function AuctionPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [isRemoveAllDialogOpen, setIsRemoveAllDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
 
@@ -580,6 +581,11 @@ const handleRemoveAllPlayers = async () => {
 };
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
+  const filteredUpcomingPlayers = useMemo(() => {
+    return players.filter(player =>
+      player.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [players, searchTerm]);
   
   if (loading) {
     return (
@@ -754,16 +760,28 @@ const handleRemoveAllPlayers = async () => {
       {renderAuctionContent()}
 
       <Card className="max-w-4xl mx-auto">
-          <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Next up Ahead</CardTitle>
-              <div className="flex gap-2">
-                  <Button variant="destructive" onClick={() => setIsRemoveAllDialogOpen(true)} disabled={players.length === 0}>
-                      <Trash2 className="mr-2 h-4 w-4" /> Remove All
-                  </Button>
-                  <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add Player
-                  </Button>
+          <CardHeader className="space-y-4">
+              <div className="flex flex-row items-center justify-between">
+                  <CardTitle>Next up Ahead</CardTitle>
+                  <div className="flex gap-2">
+                      <Button variant="destructive" onClick={() => setIsRemoveAllDialogOpen(true)} disabled={players.length === 0}>
+                          <Trash2 className="mr-2 h-4 w-4" /> Remove All
+                      </Button>
+                      <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add Player
+                      </Button>
+                  </div>
               </div>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search by player name..."
+                    className="w-full pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+               </div>
           </CardHeader>
           <CardContent>
               <Table>
@@ -777,10 +795,10 @@ const handleRemoveAllPlayers = async () => {
                       </TableRow>
                   </TableHeader>
                   <TableBody>
-                      {players.length > 0 ? (
-                          players.map((player, index) => (
+                      {filteredUpcomingPlayers.length > 0 ? (
+                          filteredUpcomingPlayers.map((player, index) => (
                               <TableRow key={player.id} className="cursor-pointer" onClick={() => setSelectedPlayer(player)}>
-                                  <TableCell>{index + 1}</TableCell>
+                                  <TableCell>{players.findIndex(p => p.id === player.id) + 1}</TableCell>
                                   <TableCell>
                                       <Avatar>
                                           <AvatarImage src={player.photoUrl} alt={player.name} />
@@ -801,29 +819,29 @@ const handleRemoveAllPlayers = async () => {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem
-                                                onClick={() => moveToTop(index)}
-                                                disabled={index === 0}
+                                                onClick={() => moveToTop(players.findIndex(p => p.id === player.id))}
+                                                disabled={players.findIndex(p => p.id === player.id) === 0}
                                             >
                                                 <ArrowUpToLine className="mr-2 h-4 w-4" />
                                                 Move to Top
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                onClick={() => movePlayer(index, 'up')}
-                                                disabled={index === 0}
+                                                onClick={() => movePlayer(players.findIndex(p => p.id === player.id), 'up')}
+                                                disabled={players.findIndex(p => p.id === player.id) === 0}
                                             >
                                                 <ArrowUp className="mr-2 h-4 w-4" />
                                                 Move Up
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                onClick={() => movePlayer(index, 'down')}
-                                                disabled={index === players.length - 1}
+                                                onClick={() => movePlayer(players.findIndex(p => p.id === player.id), 'down')}
+                                                disabled={players.findIndex(p => p.id === player.id) === players.length - 1}
                                             >
                                                 <ArrowDown className="mr-2 h-4 w-4" />
                                                 Move Down
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                onClick={() => moveToBottom(index)}
-                                                disabled={index === players.length - 1}
+                                                onClick={() => moveToBottom(players.findIndex(p => p.id === player.id))}
+                                                disabled={players.findIndex(p => p.id === player.id) === players.length - 1}
                                             >
                                                 <ArrowDownToLine className="mr-2 h-4 w-4" />
                                                 Move to Bottom
@@ -844,7 +862,7 @@ const handleRemoveAllPlayers = async () => {
                       ) : (
                         <TableRow>
                             <TableCell colSpan={5} className="text-center">
-                                No upcoming players.
+                                {searchTerm ? `No players found for "${searchTerm}".` : "No upcoming players."}
                             </TableCell>
                         </TableRow>
                       )}
