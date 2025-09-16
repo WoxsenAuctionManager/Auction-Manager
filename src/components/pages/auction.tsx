@@ -45,7 +45,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2 } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -143,6 +143,8 @@ export function AuctionPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAddPlayersDialogOpen, setIsAddPlayersDialogOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
+  const [isRemoveAllDialogOpen, setIsRemoveAllDialogOpen] = useState(false);
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
 
@@ -478,10 +480,82 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
         newPlayers[index] = newPlayers[swapIndex];
         newPlayers[swapIndex] = playerToMove;
 
+        // Also update currentPlayerIndex if the currently auctioned player is moved
+        if(index === currentPlayerIndex) {
+            setCurrentPlayerIndex(swapIndex);
+        } else if (swapIndex === currentPlayerIndex) {
+            setCurrentPlayerIndex(index);
+        }
+
         return newPlayers;
     });
 };
 
+const handleRemovePlayer = async () => {
+    if (!playerToRemove || !user || !selectedAuction) return;
+
+    setIsProcessing(true);
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players", playerToRemove.id));
+
+      setPlayers(prev => {
+          const newPlayers = prev.filter(p => p.id !== playerToRemove.id);
+          if (currentPlayerIndex >= newPlayers.length && newPlayers.length > 0) {
+              setCurrentPlayerIndex(newPlayers.length - 1);
+          }
+          return newPlayers;
+      });
+
+      toast({
+          title: "Player Removed",
+          description: `${playerToRemove.name} has been removed from the auction queue.`
+      });
+
+    } catch (err) {
+        console.error("Error removing player from queue:", err);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to remove player. Please try again."
+        });
+    } finally {
+        setPlayerToRemove(null);
+        setIsProcessing(false);
+    }
+};
+
+const handleRemoveAllPlayers = async () => {
+    if (!user || !selectedAuction) return;
+
+    setIsProcessing(true);
+    try {
+        const batch = writeBatch(db);
+        const queuedPlayersRef = collection(db, "users", user.uid, "auctions", selectedAuction.id, "queued_players");
+        const snapshot = await getDocs(queuedPlayersRef);
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        setPlayers([]);
+        setCurrentPlayerIndex(0);
+        toast({
+            title: "Queue Cleared",
+            description: "All players have been removed from the auction queue."
+        });
+
+    } catch (err) {
+        console.error("Error clearing queue:", err);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to clear the auction queue. Please try again."
+        });
+    } finally {
+        setIsRemoveAllDialogOpen(false);
+        setIsProcessing(false);
+    }
+};
 
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   
@@ -660,9 +734,14 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
       <Card className="max-w-4xl mx-auto">
           <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Next up Ahead</CardTitle>
-              <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add Player
-              </Button>
+              <div className="flex gap-2">
+                  <Button variant="destructive" onClick={() => setIsRemoveAllDialogOpen(true)} disabled={players.length === 0}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Remove All
+                  </Button>
+                  <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add Player
+                  </Button>
+              </div>
           </CardHeader>
           <CardContent>
               <Table>
@@ -706,6 +785,14 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
                                         >
                                             <ArrowDown className="h-4 w-4" />
                                         </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-destructive"
+                                            onClick={() => setPlayerToRemove(player)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                   </TableCell>
                               </TableRow>
@@ -733,6 +820,42 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
         open={!!selectedPlayer}
         onOpenChange={() => setSelectedPlayer(null)}
       />
+    <AlertDialog open={!!playerToRemove} onOpenChange={(open) => !open && setPlayerToRemove(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This will remove <strong>{playerToRemove?.name}</strong> from the auction queue.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemovePlayer} disabled={isProcessing}>
+                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Confirm
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    <AlertDialog open={isRemoveAllDialogOpen} onOpenChange={setIsRemoveAllDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to remove all players?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This will clear the entire "Next up Ahead" list. This action cannot be undone.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveAllPlayers} disabled={isProcessing}>
+                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Remove All
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
+
+    
