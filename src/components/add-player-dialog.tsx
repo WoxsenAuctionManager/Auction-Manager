@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -34,6 +35,7 @@ import { convertGoogleDriveUrl } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { useAuctionSelection } from "@/context/auction-selection-context";
 import { Combobox } from "./ui/combobox";
+import { useAuction } from "@/context/auction-context";
 
 const playerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -87,6 +89,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
+  const { columnLabels } = useAuction();
   const isEditMode = !!playerToEdit;
 
   const form = useForm<PlayerFormValues>({
@@ -189,7 +192,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>{columnLabels.name}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -202,7 +205,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   name="contact"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Contact</FormLabel>
+                      <FormLabel>{columnLabels.contact}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -215,7 +218,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   name="department"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Department</FormLabel>
+                      <FormLabel>{columnLabels.department}</FormLabel>
                       <Combobox
                         options={departmentOptions}
                         value={field.value}
@@ -232,7 +235,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   name="year"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                        <FormLabel>Year</FormLabel>
+                        <FormLabel>{columnLabels.year}</FormLabel>
                         <Combobox
                             options={watchedDepartment === 'Staff' ? [{value: 'NA', label: 'NA'}] : yearOptions}
                             value={field.value}
@@ -250,7 +253,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   name="player_position"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Player Position</FormLabel>
+                      <FormLabel>{columnLabels.player_position}</FormLabel>
                        <Combobox
                             options={positionOptions}
                             value={field.value}
@@ -267,7 +270,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                   name="photoUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Player Photo URL</FormLabel>
+                      <FormLabel>{columnLabels.photo}</FormLabel>
                       <FormControl>
                         <Textarea placeholder="https://example.com/photo.jpg" {...field} />
                       </FormControl>
