@@ -26,22 +26,22 @@ export function PlayerProfileDialog({ player, open, onOpenChange }: PlayerProfil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Player Profile</DialogTitle>
         </DialogHeader>
-        <div className="grid md:grid-cols-2 gap-8 items-center py-6">
+        <div className="grid md:grid-cols-2 gap-12 items-center py-8">
           <div className="flex justify-center">
-            <Avatar className="h-64 w-64 border-4 border-primary">
+            <Avatar className="h-80 w-80 border-4 border-primary">
               <AvatarImage src={player.photoUrl} alt={player.name} className="object-cover"/>
-              <AvatarFallback className="text-8xl">
+              <AvatarFallback className="text-9xl">
                 <User />
               </AvatarFallback>
             </Avatar>
           </div>
-          <div className="w-full space-y-6 text-center md:text-left">
-             <h2 className="text-4xl font-bold tracking-tight">{player.name}</h2>
-             <div className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-4 text-lg">
+          <div className="w-full space-y-8 text-center md:text-left">
+             <h2 className="text-5xl font-bold tracking-tight">{player.name}</h2>
+             <div className="grid grid-cols-[max-content_1fr] gap-x-8 gap-y-6 text-2xl">
                 <p className="font-semibold text-muted-foreground">{columnLabels.contact}</p>
                 <p>{player.contact}</p>
 
