@@ -37,6 +37,7 @@ import { AuctionSettingsDialog } from "../auction-settings-dialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { convertGoogleDriveUrl } from "@/lib/utils";
+import { useAuction } from "@/context/auction-context";
 
 interface RosterPlayer extends Player {
   price?: number;
@@ -60,6 +61,7 @@ export function TeamRosterPage() {
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
   const { toast } = useToast();
+  const { columnLabels } = useAuction();
 
   const fetchTeamRostersAndSettings = useCallback(async () => {
     if (!user || !selectedAuction) {
@@ -162,7 +164,7 @@ export function TeamRosterPage() {
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Player Name', 'Position', 'Price']],
+        head: [[columnLabels.name, columnLabels.player_position, 'Price']],
         body: team.roster.map(player => [
           player.name,
           player.player_position,
@@ -255,8 +257,8 @@ export function TeamRosterPage() {
                   <TableRow>
                     <TableHead className="w-[80px]">Sno.</TableHead>
                     <TableHead>Player Photo</TableHead>
-                    <TableHead>Player Name</TableHead>
-                    <TableHead>Player Position</TableHead>
+                    <TableHead>{columnLabels.name}</TableHead>
+                    <TableHead>{columnLabels.player_position}</TableHead>
                     <TableHead>Price</TableHead>
                   </TableRow>
                 </TableHeader>

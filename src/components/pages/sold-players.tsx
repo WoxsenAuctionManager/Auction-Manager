@@ -175,7 +175,7 @@ export function SoldPlayersPage() {
     doc.text("Sold Players", 14, 16);
     autoTable(doc, {
       startY: 20,
-      head: [['Name', 'Position', 'Team', 'Price']],
+      head: [[columnLabels.name, columnLabels.player_position, 'Team', 'Price']],
       body: filteredPlayers.map(player => [
         player.name,
         player.player_position,
