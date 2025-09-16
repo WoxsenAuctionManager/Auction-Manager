@@ -46,6 +46,7 @@ import { convertGoogleDriveUrl } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PlayerProfileDialog } from "../player-profile-dialog";
+import { useAuction } from "@/context/auction-context";
 
 interface SoldPlayer extends Player {
   price?: number;
@@ -66,6 +67,7 @@ export function SoldPlayersPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
+  const { columnLabels } = useAuction();
 
   const fetchSoldPlayers = useCallback(async () => {
     if (!user || !selectedAuction) {
@@ -221,13 +223,13 @@ export function SoldPlayersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]">Sno.</TableHead>
-                  <TableHead>Player Photo</TableHead>
-                  <TableHead>Player</TableHead>
-                  <TableHead>Position</TableHead>
+                  <TableHead className="w-[80px]">{columnLabels.sno}</TableHead>
+                  <TableHead>{columnLabels.photo}</TableHead>
+                  <TableHead>{columnLabels.name}</TableHead>
+                  <TableHead>{columnLabels.player_position}</TableHead>
                   <TableHead>Sold To</TableHead>
                   <TableHead>Price</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{columnLabels.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

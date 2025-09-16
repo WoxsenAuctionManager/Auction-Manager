@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PlayerProfileDialog } from "../player-profile-dialog";
+import { useAuction } from "@/context/auction-context";
 
 
 export function UnsoldPlayersPage() {
@@ -57,6 +58,7 @@ export function UnsoldPlayersPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
+  const { columnLabels } = useAuction();
 
   const fetchUnsoldPlayers = useCallback(async () => {
       if (!user || !selectedAuction) {
@@ -226,14 +228,14 @@ export function UnsoldPlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">Sno.</TableHead>
-                <TableHead>Photo</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Player Position</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[80px]">{columnLabels.sno}</TableHead>
+                <TableHead>{columnLabels.photo}</TableHead>
+                <TableHead>{columnLabels.name}</TableHead>
+                <TableHead>{columnLabels.contact}</TableHead>
+                <TableHead>{columnLabels.department}</TableHead>
+                <TableHead>{columnLabels.year}</TableHead>
+                <TableHead>{columnLabels.player_position}</TableHead>
+                <TableHead className="text-right">{columnLabels.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
