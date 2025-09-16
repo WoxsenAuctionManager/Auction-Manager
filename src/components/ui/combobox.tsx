@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -43,7 +44,7 @@ export function Combobox({ options, value, onChange, placeholder, searchPlacehol
         >
           {value
             ? options.find((option) => option.value === value)?.label || value
-            : placeholder || "Select option..."}
+            : placeholder || "Select..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

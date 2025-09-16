@@ -223,7 +223,6 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                         options={departmentOptions}
                         value={field.value}
                         onChange={field.onChange}
-                        placeholder="Select a department"
                         searchPlaceholder="Search departments..."
                       />
                       <FormMessage />
@@ -240,7 +239,6 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                             options={watchedDepartment === 'Staff' ? [{value: 'NA', label: 'NA'}] : yearOptions}
                             value={field.value}
                             onChange={field.onChange}
-                            placeholder="Select a year"
                             searchPlaceholder="Search years..."
                             disabled={watchedDepartment === 'Staff'}
                         />
@@ -258,7 +256,6 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                             options={positionOptions}
                             value={field.value}
                             onChange={field.onChange}
-                            placeholder="Select a position"
                             searchPlaceholder="Search positions..."
                         />
                       <FormMessage />
@@ -272,7 +269,7 @@ export function AddPlayerDialog({ open, onOpenChange, onPlayerAdded, onPlayerUpd
                     <FormItem>
                       <FormLabel>{columnLabels.photo}</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="https://example.com/photo.jpg" {...field} />
+                        <Textarea {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
