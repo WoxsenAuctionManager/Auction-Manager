@@ -45,7 +45,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2, MoreHorizontal } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2, MoreHorizontal, ArrowUpToLine, ArrowDownToLine } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -492,6 +492,26 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     });
 };
 
+const moveToTop = (index: number) => {
+    setPlayers(currentPlayers => {
+        const newPlayers = [...currentPlayers];
+        const playerToMove = newPlayers.splice(index, 1)[0];
+        newPlayers.unshift(playerToMove);
+        setCurrentPlayerIndex(0);
+        return newPlayers;
+    });
+};
+
+const moveToBottom = (index: number) => {
+    setPlayers(currentPlayers => {
+        const newPlayers = [...currentPlayers];
+        const playerToMove = newPlayers.splice(index, 1)[0];
+        newPlayers.push(playerToMove);
+        setCurrentPlayerIndex(0);
+        return newPlayers;
+    });
+};
+
 const handleRemovePlayer = async () => {
     if (!playerToRemove || !user || !selectedAuction) return;
 
@@ -769,43 +789,39 @@ const handleRemoveAllPlayers = async () => {
                                   <TableCell>{player.name}</TableCell>
                                   <TableCell>{player.player_position}</TableCell>
                                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => movePlayer(index, 'up')}
-                                            disabled={index === 0}
-                                        >
-                                            <ArrowUp className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => movePlayer(index, 'down')}
-                                            disabled={index === players.length - 1}
-                                        >
-                                            <ArrowDown className="h-4 w-4" />
-                                        </Button>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() => setPlayerToRemove(player)}
-                                                    className="text-destructive"
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                            >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onClick={() => moveToTop(index)}
+                                                disabled={index === 0}
+                                            >
+                                                <ArrowUpToLine className="mr-2 h-4 w-4" />
+                                                Move to Top
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => moveToBottom(index)}
+                                                disabled={index === players.length - 1}
+                                            >
+                                                <ArrowDownToLine className="mr-2 h-4 w-4" />
+                                                Move to Bottom
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => setPlayerToRemove(player)}
+                                                className="text-destructive"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </TableCell>
                               </TableRow>
                           ))
@@ -869,3 +885,5 @@ const handleRemoveAllPlayers = async () => {
     </>
   );
 }
+
+    
