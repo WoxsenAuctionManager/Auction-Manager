@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Loader2, Expand, Shrink } from "lucide-react";
 import { Button } from "../ui/button";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collectionGroup, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 // This is a simplified interface for what we expect from localStorage
@@ -26,6 +26,24 @@ interface AuctionDetails {
     name: string;
     owner: string;
 }
+
+async function findAuctionOwner(auctionId: string): Promise<string | null> {
+    const auctionsRef = collectionGroup(db, 'auctions');
+    const q = query(auctionsRef, where('__name__', '==', auctionId));
+    
+    try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            // The path will be users/{userId}/auctions/{auctionId}
+            return doc.ref.parent.parent?.id || null;
+        }
+    } catch(e) {
+        console.error("Error finding auction owner", e);
+    }
+    return null;
+}
+
 
 export function LivePreviewPage({ auctionId }: { auctionId: string }) {
   const [auctionState, setAuctionState] = useState<AuctionState | null>(null);
@@ -50,55 +68,73 @@ export function LivePreviewPage({ auctionId }: { auctionId: string }) {
   }, []);
   
   useEffect(() => {
-    if (!auctionId || typeof window === 'undefined') return;
+    if (!auctionId || typeof window === 'undefined' || !isClient) return;
 
-    const handleStorageChange = () => {
-        try {
-            const key = `auction_${auctionId}`;
-            const data = localStorage.getItem(key);
-            if (data) {
-                const parsedData = JSON.parse(data);
-                setAuctionState(parsedData);
-            }
-            setLoading(false);
-        } catch (e) {
-            console.error("Error reading from localStorage", e);
-            setError("Could not load auction data.");
-            setLoading(false);
-        }
-    };
-    
-    handleStorageChange(); // Initial load
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also fetch auction details like name
-    const ownerId = localStorage.getItem(`auction_${auctionId}_owner`);
-    if(ownerId) {
+    let unsubscribe: (() => void) | null = null;
+    let storageUnsubscribe: (() => void) | null = null;
+
+    const setupListeners = (ownerId: string, stateKey: string) => {
+        // Listener for auction details (name, etc.)
         const auctionDocRef = doc(db, "users", ownerId, "auctions", auctionId);
-        const unsubscribe = onSnapshot(auctionDocRef, (docSnap) => {
+        unsubscribe = onSnapshot(auctionDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 setAuctionDetails(docSnap.data() as AuctionDetails);
             } else {
                 setError("Auction not found.");
             }
         });
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            unsubscribe();
+
+        // Listener for live state changes from localStorage sync
+        const handleStorageChange = (event?: StorageEvent) => {
+            if (event && event.key !== stateKey) return;
+            try {
+                const data = localStorage.getItem(stateKey);
+                if (data) {
+                    setAuctionState(JSON.parse(data));
+                }
+            } catch (e) {
+                console.error("Error reading from localStorage", e);
+            }
         };
-    } else {
-        // Fallback for finding owner if not in local storage (might be slow)
-        // This part is complex without a dedicated public collection.
-        // For now, we'll rely on the auctioneer's browser to sync owner.
-    }
 
-
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
+        window.addEventListener('storage', handleStorageChange);
+        handleStorageChange(); // Initial load
+        storageUnsubscribe = () => window.removeEventListener('storage', handleStorageChange);
     };
 
-  }, [auctionId]);
+    const initialize = async () => {
+        setLoading(true);
+        const stateKey = `auction_${auctionId}`;
+        const ownerKey = `${stateKey}_owner`;
+        
+        let ownerId = localStorage.getItem(ownerKey);
+
+        if (ownerId) {
+            setupListeners(ownerId, stateKey);
+            setLoading(false);
+        } else {
+            // Fallback: If owner is not in localStorage, find it in Firestore
+            ownerId = await findAuctionOwner(auctionId);
+            if (ownerId) {
+                // Save owner for next time
+                localStorage.setItem(ownerKey, ownerId);
+                setupListeners(ownerId, stateKey);
+                setLoading(false);
+            } else {
+                setError("Could not find auction. The link may be incorrect.");
+                setLoading(false);
+            }
+        }
+    };
+
+    initialize();
+
+    return () => {
+        if (unsubscribe) unsubscribe();
+        if (storageUnsubscribe) storageUnsubscribe();
+    };
+
+  }, [auctionId, isClient]);
 
 
   const toggleFullscreen = () => {
