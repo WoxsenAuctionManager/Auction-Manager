@@ -159,16 +159,17 @@ export function TeamRosterPage() {
       yPos += 7;
 
       doc.setFontSize(10);
-      doc.text(`Amount Remaining: ${team.remainingPurse.toLocaleString()}`, 14, yPos);
+      doc.text(`Amount Remaining: ₹${team.remainingPurse.toLocaleString('en-IN')}`, 14, yPos);
       yPos += 10;
 
       autoTable(doc, {
         startY: yPos,
-        head: [[columnLabels.name, columnLabels.player_position, 'Price']],
-        body: team.roster.map(player => [
+        head: [[columnLabels.sno, columnLabels.name, columnLabels.player_position, 'Price']],
+        body: team.roster.map((player, index) => [
+          index + 1,
           player.name,
           player.player_position,
-          player.price?.toLocaleString() || 'N/A'
+          `₹${player.price?.toLocaleString('en-IN') || 'N/A'}`
         ]),
         theme: 'striped',
         headStyles: { fillColor: [38, 115, 101] },

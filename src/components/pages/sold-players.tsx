@@ -175,12 +175,13 @@ export function SoldPlayersPage() {
     doc.text("Sold Players", 14, 16);
     autoTable(doc, {
       startY: 20,
-      head: [[columnLabels.name, columnLabels.player_position, 'Team', 'Price']],
-      body: filteredPlayers.map(player => [
+      head: [[columnLabels.sno, columnLabels.name, columnLabels.player_position, 'Team', 'Price']],
+      body: filteredPlayers.map((player, index) => [
+        index + 1,
         player.name,
         player.player_position,
         player.teamName || 'N/A',
-        player.price?.toString() || 'N/A',
+        `₹${player.price?.toLocaleString('en-IN') || 'N/A'}`,
       ]),
     });
     doc.save("sold-players.pdf");

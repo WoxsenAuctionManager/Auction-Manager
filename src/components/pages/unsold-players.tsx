@@ -170,13 +170,15 @@ export function UnsoldPlayersPage() {
     autoTable(doc, {
       startY: 20,
       head: [[
+        columnLabels.sno,
         columnLabels.name,
         columnLabels.contact,
         columnLabels.department,
         columnLabels.year,
         columnLabels.player_position,
       ]],
-      body: filteredPlayers.map(player => [
+      body: filteredPlayers.map((player, index) => [
+        index + 1,
         player.name,
         player.contact,
         player.department,
