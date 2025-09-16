@@ -50,7 +50,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40">
+       <div className="text-center mb-8">
+          <h1 className="font-bold text-4xl tracking-tight">WUSA Auctions Manager</h1>
+      </div>
       <Card className="mx-auto max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
