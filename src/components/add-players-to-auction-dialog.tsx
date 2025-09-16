@@ -92,6 +92,11 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
       fetchPlayers();
     }
   }, [open, toast, playersInQueue, user, selectedAuction]);
+  
+  const availablePositions = useMemo(() => {
+    const positions = new Set(allPlayers.map(p => p.player_position).filter(Boolean));
+    return Array.from(positions);
+  }, [allPlayers]);
 
   const filteredPlayers = useMemo(() => {
     return allPlayers.filter((player) =>
@@ -162,10 +167,9 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Positions</SelectItem>
-                        <SelectItem value="Forward">Forward</SelectItem>
-                        <SelectItem value="Mid Fielder">Mid Fielder</SelectItem>
-                        <SelectItem value="Defender">Defender</SelectItem>
-                        <SelectItem value="Goal Keeper">Goal Keeper</SelectItem>
+                        {availablePositions.map(position => (
+                            <SelectItem key={position} value={position}>{position}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>
