@@ -4,6 +4,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import type { Player } from '@/components/pages/players';
 import { useAuctionSelection } from './auction-selection-context';
+import type { ColumnLabels } from '@/components/pages/players';
 
 type AuctionPlayer = Player & { price?: number; teamId?: string; status?: 'sold' | 'unsold' | 'queued' };
 
@@ -15,11 +16,23 @@ interface ActionRecord {
     previousCurrentPlayerIndex: number;
 }
 
+const defaultColumnLabels: ColumnLabels = {
+    sno: 'Sno.',
+    photo: 'Photo',
+    name: 'Name',
+    contact: 'Contact',
+    department: 'Department',
+    year: 'Year',
+    player_position: 'Player Position',
+    actions: 'Actions',
+};
+
 interface AuctionState {
     players: AuctionPlayer[];
     currentPlayerIndex: number;
     auctionStarted: boolean;
     actionHistory: ActionRecord[];
+    columnLabels: ColumnLabels;
 }
 
 interface AuctionContextType extends AuctionState {
@@ -27,6 +40,7 @@ interface AuctionContextType extends AuctionState {
     setCurrentPlayerIndex: (value: React.SetStateAction<number>) => void;
     setAuctionStarted: (value: React.SetStateAction<boolean>) => void;
     setActionHistory: (value: React.SetStateAction<ActionRecord[]>) => void;
+    setColumnLabels: (value: React.SetStateAction<ColumnLabels>) => void;
 }
 
 const AuctionContext = createContext<AuctionContextType | undefined>(undefined);
@@ -55,6 +69,7 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
                 currentPlayerIndex: 0,
                 auctionStarted: false,
                 actionHistory: [],
+                columnLabels: defaultColumnLabels
             };
         }
         return {
@@ -62,6 +77,7 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
             currentPlayerIndex: getLocalStorageItem(`auction_${auctionId}_currentPlayerIndex`, 0),
             auctionStarted: getLocalStorageItem(`auction_${auctionId}_auctionStarted`, false),
             actionHistory: getLocalStorageItem(`auction_${auctionId}_actionHistory`, []),
+            columnLabels: getLocalStorageItem(`auction_${auctionId}_columnLabels`, defaultColumnLabels)
         };
     }, [auctionId]);
 
@@ -69,6 +85,7 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(() => getInitialState().currentPlayerIndex);
     const [auctionStarted, setAuctionStarted] = useState<boolean>(() => getInitialState().auctionStarted);
     const [actionHistory, setActionHistory] = useState<ActionRecord[]>(() => getInitialState().actionHistory);
+    const [columnLabels, setColumnLabels] = useState<ColumnLabels>(() => getInitialState().columnLabels);
 
     useEffect(() => {
         const initialState = getInitialState();
@@ -76,6 +93,7 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
         setCurrentPlayerIndex(initialState.currentPlayerIndex);
         setAuctionStarted(initialState.auctionStarted);
         setActionHistory(initialState.actionHistory);
+        setColumnLabels(initialState.columnLabels);
     }, [auctionId, getInitialState]);
     
     useEffect(() => {
@@ -95,6 +113,10 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
     }, [actionHistory, auctionId]);
 
     useEffect(() => {
+        if(auctionId) localStorage.setItem(`auction_${auctionId}_columnLabels`, JSON.stringify(columnLabels));
+    }, [columnLabels, auctionId]);
+
+    useEffect(() => {
         const handleStorageChange = (event: StorageEvent) => {
             if (auctionId && event.key?.startsWith(`auction_${auctionId}`)) {
                 const initialState = getInitialState();
@@ -102,6 +124,7 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
                 setCurrentPlayerIndex(initialState.currentPlayerIndex);
                 setAuctionStarted(initialState.auctionStarted);
                 setActionHistory(initialState.actionHistory);
+                setColumnLabels(initialState.columnLabels);
             }
         };
 
@@ -118,10 +141,12 @@ export function AuctionProvider({ children }: { children: ReactNode }) {
         currentPlayerIndex,
         auctionStarted,
         actionHistory,
+        columnLabels,
         setPlayers,
         setCurrentPlayerIndex,
         setAuctionStarted,
         setActionHistory,
+        setColumnLabels,
     };
 
     return (

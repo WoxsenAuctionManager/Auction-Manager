@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Loader2 } from "lucide-react";
 
 export function LivePreviewPage() {
-  const { players, currentPlayerIndex, auctionStarted } = useAuction();
+  const { players, currentPlayerIndex, auctionStarted, columnLabels } = useAuction();
   const [isSyncing, setIsSyncing] = useState(true);
 
   useEffect(() => {
@@ -94,11 +94,11 @@ export function LivePreviewPage() {
           </Avatar>
           <div className="w-full space-y-6">
             <div className="grid grid-cols-2 gap-x-8 gap-y-6 text-3xl">
-              <p className="font-semibold text-muted-foreground">Department</p>
+              <p className="font-semibold text-muted-foreground">{columnLabels.department}</p>
               <p className="font-medium">{currentPlayer.department}</p>
-              <p className="font-semibold text-muted-foreground">Year</p>
+              <p className="font-semibold text-muted-foreground">{columnLabels.year}</p>
               <p className="font-medium">{currentPlayer.year}</p>
-              <p className="font-semibold text-muted-foreground">Position</p>
+              <p className="font-semibold text-muted-foreground">{columnLabels.player_position}</p>
               <p className="font-medium">{currentPlayer.player_position}</p>
             </div>
           </div>

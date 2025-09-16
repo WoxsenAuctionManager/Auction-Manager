@@ -132,6 +132,7 @@ export function AuctionPage() {
     setAuctionStarted,
     actionHistory,
     setActionHistory,
+    columnLabels,
   } = useAuction();
   
   const [teams, setTeams] = useState<Team[]>([]);
@@ -562,11 +563,11 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
                 </Avatar>
                 <div className="w-full space-y-3">
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
-                        <p className="font-medium text-muted-foreground">Department</p>
+                        <p className="font-medium text-muted-foreground">{columnLabels.department}</p>
                         <p>{currentPlayer.department}</p>
-                        <p className="font-medium text-muted-foreground">Year</p>
+                        <p className="font-medium text-muted-foreground">{columnLabels.year}</p>
                         <p>{currentPlayer.year}</p>
-                        <p className="font-medium text-muted-foreground">Position</p>
+                        <p className="font-medium text-muted-foreground">{columnLabels.player_position}</p>
                         <p>{currentPlayer.player_position}</p>
                     </div>
                 </div>
@@ -657,11 +658,11 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
               <Table>
                   <TableHeader>
                       <TableRow>
-                          <TableHead className="w-[80px]">Sno.</TableHead>
-                          <TableHead>Photo</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Position</TableHead>
-                          <TableHead className="w-[120px] text-center">Actions</TableHead>
+                          <TableHead className="w-[80px]">{columnLabels.sno}</TableHead>
+                          <TableHead>{columnLabels.photo}</TableHead>
+                          <TableHead>{columnLabels.name}</TableHead>
+                          <TableHead>{columnLabels.player_position}</TableHead>
+                          <TableHead className="w-[120px] text-center">{columnLabels.actions}</TableHead>
                       </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -720,5 +721,3 @@ const movePlayer = (index: number, direction: 'up' | 'down') => {
     </>
   );
 }
-
-    

@@ -63,6 +63,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PlayerProfileDialog } from "../player-profile-dialog";
 import { ImportPlayersDialog } from "../import-players-dialog";
 import { EditColumnNamesDialog } from "../edit-column-names-dialog";
+import { useAuction } from "@/context/auction-context";
 
 
 export interface Player {
@@ -106,17 +107,9 @@ export function PlayersPage() {
     year: true,
     player_position: true,
   });
-  const [columnLabels, setColumnLabels] = useState<ColumnLabels>({
-    sno: 'Sno.',
-    photo: 'Photo',
-    name: 'Name',
-    contact: 'Contact',
-    department: 'Department',
-    year: 'Year',
-    player_position: 'Player Position',
-    actions: 'Actions',
-  });
-
+  
+  const { columnLabels, setColumnLabels } = useAuction();
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -593,5 +586,3 @@ export function PlayersPage() {
     </>
   );
 }
-
-    
