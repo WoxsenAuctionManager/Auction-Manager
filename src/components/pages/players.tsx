@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -61,6 +62,8 @@ import { AddPlayerDialog } from "../add-player-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PlayerProfileDialog } from "../player-profile-dialog";
 import { ImportPlayersDialog } from "../import-players-dialog";
+import { EditColumnNamesDialog } from "../edit-column-names-dialog";
+
 
 export interface Player {
   id: string;
@@ -76,6 +79,11 @@ type ColumnVisibility = {
   [key in keyof Omit<Player, 'id' | 'name' | 'photoUrl'>]: boolean;
 };
 
+export type ColumnLabels = {
+  [key in keyof Omit<Player, 'id'> | 'sno' | 'actions' | 'photo']: string;
+};
+
+
 export function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +97,7 @@ export function PlayersPage() {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [isImportPlayerDialogOpen, setIsImportPlayerDialogOpen] = useState(false);
+  const [isEditColumnsDialogOpen, setIsEditColumnsDialogOpen] = useState(false);
   const [importedPlayers, setImportedPlayers] = useState<Omit<Player, 'id'>[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
@@ -96,6 +105,16 @@ export function PlayersPage() {
     department: true,
     year: true,
     player_position: true,
+  });
+  const [columnLabels, setColumnLabels] = useState<ColumnLabels>({
+    sno: 'Sno.',
+    photo: 'Photo',
+    name: 'Name',
+    contact: 'Contact',
+    department: 'Department',
+    year: 'Year',
+    player_position: 'Player Position',
+    actions: 'Actions',
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -352,6 +371,14 @@ export function PlayersPage() {
         players={importedPlayers}
         isImporting={isImporting}
       />
+      
+      <EditColumnNamesDialog
+        open={isEditColumnsDialogOpen}
+        onOpenChange={setIsEditColumnsDialogOpen}
+        columnLabels={columnLabels}
+        onSave={setColumnLabels}
+      />
+
 
       {error && (
         <Alert variant="destructive">
@@ -416,7 +443,12 @@ export function PlayersPage() {
                 <Upload className="mr-2 h-4 w-4" />
                 Import Players
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setSelectionMode(true)} disabled={players.length === 0}>
+              <DropdownMenuItem onSelect={() => setIsEditColumnsDialogOpen(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Column Names
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setSelectionMode(true)} disabled={players.length === 0} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Remove Players
               </DropdownMenuItem>
@@ -444,14 +476,14 @@ export function PlayersPage() {
                     />
                   </TableHead>
                 )}
-                <TableHead className="w-[80px]">Sno.</TableHead>
-                <TableHead>Photo</TableHead>
-                <TableHead>Name</TableHead>
-                {columnVisibility.contact && <TableHead>Contact</TableHead>}
-                {columnVisibility.department && <TableHead>Department</TableHead>}
-                {columnVisibility.year && <TableHead>Year</TableHead>}
-                {columnVisibility.player_position && <TableHead>Player Position</TableHead>}
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[80px]">{columnLabels.sno}</TableHead>
+                <TableHead>{columnLabels.photo}</TableHead>
+                <TableHead>{columnLabels.name}</TableHead>
+                {columnVisibility.contact && <TableHead>{columnLabels.contact}</TableHead>}
+                {columnVisibility.department && <TableHead>{columnLabels.department}</TableHead>}
+                {columnVisibility.year && <TableHead>{columnLabels.year}</TableHead>}
+                {columnVisibility.player_position && <TableHead>{columnLabels.player_position}</TableHead>}
+                <TableHead className="text-right">{columnLabels.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -561,3 +593,5 @@ export function PlayersPage() {
     </>
   );
 }
+
+    
