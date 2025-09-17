@@ -28,19 +28,9 @@ interface AuctionDetails {
 }
 
 async function findAuctionOwner(auctionId: string): Promise<string | null> {
-    const auctionsRef = collectionGroup(db, 'auctions');
-    const q = query(auctionsRef, where('__name__', '==', auctionId));
-    
-    try {
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            const doc = querySnapshot.docs[0];
-            // The path will be users/{userId}/auctions/{auctionId}
-            return doc.ref.parent.parent?.id || null;
-        }
-    } catch(e) {
-        console.error("Error finding auction owner", e);
-    }
+    // This approach is difficult with Firestore security rules and query constraints.
+    // We will rely on the auctioneer's browser to provide the owner ID via localStorage.
+    // This function remains as a fallback concept but is not actively used in the new implementation.
     return null;
 }
 
@@ -68,7 +58,7 @@ export function LivePreviewPage({ auctionId }: { auctionId: string }) {
   }, []);
   
   useEffect(() => {
-    if (!auctionId || typeof window === 'undefined' || !isClient) return;
+    if (!auctionId || !isClient) return;
 
     let unsubscribe: (() => void) | null = null;
     let storageUnsubscribe: (() => void) | null = null;
@@ -81,7 +71,12 @@ export function LivePreviewPage({ auctionId }: { auctionId: string }) {
                 setAuctionDetails(docSnap.data() as AuctionDetails);
             } else {
                 setError("Auction not found.");
+                setLoading(false);
             }
+        }, (err) => {
+            console.error("Error fetching auction details:", err);
+            setError("Could not connect to the auction.");
+            setLoading(false);
         });
 
         // Listener for live state changes from localStorage sync
@@ -102,7 +97,7 @@ export function LivePreviewPage({ auctionId }: { auctionId: string }) {
         storageUnsubscribe = () => window.removeEventListener('storage', handleStorageChange);
     };
 
-    const initialize = async () => {
+    const initialize = () => {
         setLoading(true);
         const stateKey = `auction_${auctionId}`;
         const ownerKey = `${stateKey}_owner`;
@@ -113,17 +108,21 @@ export function LivePreviewPage({ auctionId }: { auctionId: string }) {
             setupListeners(ownerId, stateKey);
             setLoading(false);
         } else {
-            // Fallback: If owner is not in localStorage, find it in Firestore
-            ownerId = await findAuctionOwner(auctionId);
-            if (ownerId) {
-                // Save owner for next time
-                localStorage.setItem(ownerKey, ownerId);
-                setupListeners(ownerId, stateKey);
-                setLoading(false);
-            } else {
-                setError("Could not find auction. The link may be incorrect.");
-                setLoading(false);
-            }
+            // If owner is not in localStorage, we cannot construct the path.
+            // This happens for users who have never been the auctioneer for this auction.
+            setError("Waiting for auction data. If you are the auctioneer, please open the auction page.");
+            setLoading(false);
+            
+            // Periodically check if the owner ID has been set by the auctioneer's browser
+            const interval = setInterval(() => {
+                const newOwnerId = localStorage.getItem(ownerKey);
+                if(newOwnerId){
+                    clearInterval(interval);
+                    setError(null);
+                    initialize();
+                }
+            }, 2000);
+            return () => clearInterval(interval);
         }
     };
 
@@ -159,7 +158,7 @@ export function LivePreviewPage({ auctionId }: { auctionId: string }) {
     if (error) {
         return (
           <Card className="max-w-5xl mx-auto animate-fade-in w-full min-h-[550px] flex flex-col justify-center">
-            <CardHeader><CardTitle className="text-center text-3xl text-destructive">{error}</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-center text-3xl text-muted-foreground">{error}</CardTitle></CardHeader>
           </Card>
         );
     }
