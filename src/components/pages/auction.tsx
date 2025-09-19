@@ -657,68 +657,79 @@ const handleRemoveAllPlayers = async () => {
     }
 
     return (
-        <Card className="max-w-4xl mx-auto">
-            <CardHeader>
-                <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col md:flex-row items-center gap-8">
-                <div className="relative h-48 w-48 rounded-lg overflow-hidden">
-                    <Avatar className="h-full w-full border-4 border-primary shadow-lg rounded-lg">
-                        <AvatarImage
-                            src={currentPlayer.photoUrl}
-                            alt={currentPlayer.name}
-                            className="object-contain h-full w-full"
-                        />
-                        <AvatarFallback className="text-6xl rounded-lg">
-                            <User />
-                        </AvatarFallback>
-                    </Avatar>
-                </div>
-                <div className="w-full space-y-3">
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
-                        <p className="font-medium text-muted-foreground">{columnLabels.department}</p>
-                        <p>{currentPlayer.department}</p>
-                        <p className="font-medium text-muted-foreground">{columnLabels.year}</p>
-                        <p>{currentPlayer.year}</p>
-                        <p className="font-medium text-muted-foreground">{columnLabels.player_position}</p>
-                        <p>{currentPlayer.player_position}</p>
+        <Card 
+            className="max-w-4xl mx-auto relative overflow-hidden"
+            style={{
+                backgroundImage: 'url(https://storage.googleapis.com/stabl-media/65489a59-3382-4113-a083-798835848c77_wusa-logo-bg.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+            }}
+        >
+            <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm"></div>
+            <div className="relative z-10">
+                <CardHeader>
+                    <CardTitle className="text-center text-3xl">{currentPlayer.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col md:flex-row items-center gap-8">
+                    <div className="relative h-48 w-48 rounded-lg overflow-hidden">
+                        <Avatar className="h-full w-full border-4 border-primary shadow-lg rounded-lg">
+                            <AvatarImage
+                                src={currentPlayer.photoUrl}
+                                alt={currentPlayer.name}
+                                className="object-contain h-full w-full"
+                            />
+                            <AvatarFallback className="text-6xl rounded-lg">
+                                <User />
+                            </AvatarFallback>
+                        </Avatar>
                     </div>
-                </div>
-            </CardContent>
-            <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
-                <div className="grid w-full md:w-auto md:flex-1 gap-2">
-                    <Label htmlFor="team">Team</Label>
-                    <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                        <SelectTrigger id="team">
-                            <SelectValue placeholder="Select a team" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {teams.map((team) => (
-                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="grid w-full md:w-1/4 gap-2">
-                    <Label htmlFor="price">Price</Label>
-                    <Input
-                        id="price"
-                        type="number"
-                        placeholder="Enter price"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                    />
-                </div>
-                <div className="flex w-full md:w-auto self-end gap-2">
-                    <Button onClick={handleSold} className="flex-1 md:flex-none" disabled={isProcessing}>
-                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Sold
-                    </Button>
-                    <Button onClick={handleUnsold} variant="outline" className="flex-1 md:flex-none" disabled={isProcessing}>
-                        Unsold
-                    </Button>
-                </div>
-            </CardFooter>
+                    <div className="w-full space-y-3">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-lg">
+                            <p className="font-medium text-muted-foreground">{columnLabels.department}</p>
+                            <p>{currentPlayer.department}</p>
+                            <p className="font-medium text-muted-foreground">{columnLabels.year}</p>
+                            <p>{currentPlayer.year}</p>
+                            <p className="font-medium text-muted-foreground">{columnLabels.player_position}</p>
+                            <p>{currentPlayer.player_position}</p>
+                        </div>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex flex-col md:flex-row gap-4 border-t pt-6">
+                    <div className="grid w-full md:w-auto md:flex-1 gap-2">
+                        <Label htmlFor="team">Team</Label>
+                        <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                            <SelectTrigger id="team">
+                                <SelectValue placeholder="Select a team" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {teams.map((team) => (
+                                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid w-full md:w-1/4 gap-2">
+                        <Label htmlFor="price">Price</Label>
+                        <Input
+                            id="price"
+                            type="number"
+                            placeholder="Enter price"
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex w-full md:w-auto self-end gap-2">
+                        <Button onClick={handleSold} className="flex-1 md:flex-none" disabled={isProcessing}>
+                            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Sold
+                        </Button>
+                        <Button onClick={handleUnsold} variant="outline" className="flex-1 md:flex-none" disabled={isProcessing}>
+                            Unsold
+                        </Button>
+                    </div>
+                </CardFooter>
+            </div>
         </Card>
     );
 };
