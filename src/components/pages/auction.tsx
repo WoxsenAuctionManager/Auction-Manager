@@ -77,6 +77,7 @@ import {
 import { AddPlayersToAuctionDialog } from "../add-players-to-auction-dialog";
 import { useAuction } from "@/context/auction-context";
 import { PlayerProfileDialog } from "../player-profile-dialog";
+import pptxgen from "pptxgenjs";
 
 type AuctionPlayer = Player & { price?: number; teamId?: string };
 
@@ -597,6 +598,104 @@ const handleShuffle = () => {
     });
 };
 
+const handleDownloadPPT = async () => {
+  const ppt = new pptxgen();
+  ppt.defineLayout({ name: "A4", width: 16, height: 9 });
+  ppt.layout = "A4";
+  
+  setIsProcessing(true);
+  toast({
+      title: "Generating Presentation...",
+      description: "Please wait while we create the PPT file.",
+  });
+  
+  for (const player of players) {
+      const slide = ppt.addSlide();
+
+      // Add a background color or image if you want
+      slide.background = { color: "F1F1F1" };
+
+      // Player Name
+      slide.addText(player.name, {
+          x: 0.5,
+          y: 0.5,
+          w: "90%",
+          h: 1,
+          fontSize: 36,
+          bold: true,
+          align: "center",
+          color: "363636",
+      });
+      
+      // Player Image
+      if (player.photoUrl) {
+        try {
+            await new Promise<void>((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; 
+                img.onload = () => {
+                    slide.addImage({
+                        data: player.photoUrl,
+                        x: 1,
+                        y: 1.5,
+                        w: 4,
+                        h: 4,
+                    });
+                    resolve();
+                };
+                img.onerror = (err) => {
+                    console.error("Failed to load image for PPT:", player.photoUrl, err);
+                    slide.addText("Image not available", { x: 1, y: 1.5, w: 4, h: 4, align: "center", valign: "middle" });
+                    resolve();
+                };
+                img.src = player.photoUrl;
+            });
+        } catch (err) {
+            console.error("Caught error during image processing for PPT:", err);
+            slide.addText("Image not available", { x: 1, y: 1.5, w: 4, h: 4, align: "center", valign: "middle" });
+        }
+    } else {
+        slide.addText("No Image", { x: 1, y: 1.5, w: 4, h: 4, align: "center", valign: "middle" });
+    }
+
+      // Player Details
+      const details = [
+          `${columnLabels.department}: ${player.department}`,
+          `${columnLabels.year}: ${player.year}`,
+          `${columnLabels.player_position}: ${player.player_position}`,
+      ];
+
+      slide.addText(details.join("\n"), {
+          x: 6,
+          y: 2.5,
+          w: 5.5,
+          h: 2,
+          fontSize: 24,
+          color: "363636",
+          valign: 'top',
+      });
+  }
+  
+  ppt.writeFile({ fileName: "Auction-Players.pptx" })
+    .then(() => {
+        toast({
+            title: "Download Complete",
+            description: "Your presentation has been downloaded.",
+        });
+    })
+    .catch((err) => {
+        console.error(err);
+        toast({
+            variant: "destructive",
+            title: "Download Failed",
+            description: "Could not generate the presentation. Please try again.",
+        });
+    })
+    .finally(() => {
+        setIsProcessing(false);
+    });
+};
+
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   const filteredUpcomingPlayers = useMemo(() => {
     return players.filter(player =>
@@ -691,7 +790,7 @@ const handleShuffle = () => {
                     <div className="relative h-48 w-48 rounded-lg overflow-hidden">
                         <Avatar className="h-full w-full border-4 border-primary shadow-lg rounded-lg">
                             <AvatarImage
-                                src={currentPlayer.photoUrl}
+                                src={currentPlayer.photoUrl || undefined}
                                 alt={currentPlayer.name}
                                 className="object-contain h-full w-full"
                             />
@@ -798,6 +897,9 @@ const handleShuffle = () => {
                       <Button variant="outline" onClick={handleShuffle} disabled={players.length < 2}>
                         <Shuffle className="mr-2 h-4 w-4" /> Shuffle
                       </Button>
+                      <Button variant="outline" onClick={handleDownloadPPT} disabled={players.length === 0 || isProcessing}>
+                        Download PPT
+                      </Button>
                       <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
                           <PlusCircle className="mr-2 h-4 w-4" /> Add Player
                       </Button>
@@ -832,7 +934,7 @@ const handleShuffle = () => {
                                   <TableCell>{players.findIndex(p => p.id === player.id) + 1}</TableCell>
                                   <TableCell>
                                       <Avatar>
-                                          <AvatarImage src={player.photoUrl} alt={player.name} />
+                                          <AvatarImage src={player.photoUrl || undefined} alt={player.name} />
                                           <AvatarFallback><User /></AvatarFallback>
                                       </Avatar>
                                   </TableCell>
@@ -950,5 +1052,3 @@ const handleShuffle = () => {
     </>
   );
 }
-
-    

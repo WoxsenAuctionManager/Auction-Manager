@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -271,7 +272,7 @@ export function TeamRosterPage() {
                         <TableCell>
                           <Avatar>
                             <AvatarImage
-                              src={player.photoUrl}
+                              src={player.photoUrl || undefined}
                               alt={player.name}
                             />
                             <AvatarFallback>

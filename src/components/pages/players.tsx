@@ -507,7 +507,7 @@ export function PlayersPage() {
                     <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">{index + 1}</TableCell>
                     <TableCell onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
                       <Avatar>
-                        <AvatarImage src={player.photoUrl} alt={player.name} />
+                        <AvatarImage src={player.photoUrl || undefined} alt={player.name} />
                         <AvatarFallback>
                           <User />
                         </AvatarFallback>

@@ -283,7 +283,7 @@ export function DashboardPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={buy.photoUrl} />
+                          <AvatarImage src={buy.photoUrl || undefined} />
                           <AvatarFallback>{buy.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         {buy.name}
@@ -308,5 +308,3 @@ export function DashboardPage() {
     </div>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -253,7 +254,7 @@ export function SoldPlayersPage() {
                       <TableCell>
                         <Avatar>
                           <AvatarImage
-                            src={player.photoUrl}
+                            src={player.photoUrl || undefined}
                             alt={player.name}
                           />
                           <AvatarFallback>

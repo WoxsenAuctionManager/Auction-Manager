@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -202,7 +203,7 @@ export function AddPlayersToAuctionDialog({ open, onOpenChange, onPlayersAdded, 
                             />
                             <Label htmlFor={`player-${player.id}`} className="flex-1 flex items-center gap-3 cursor-pointer">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={player.photoUrl} alt={player.name} />
+                                    <AvatarImage src={player.photoUrl || undefined} alt={player.name} />
                                     <AvatarFallback><User /></AvatarFallback>
                                 </Avatar>
                                 <div>
