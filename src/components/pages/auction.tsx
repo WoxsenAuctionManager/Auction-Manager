@@ -45,7 +45,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2, MoreHorizontal, ArrowUpToLine, ArrowDownToLine, Search } from "lucide-react";
+import { Loader2, User, ArrowLeft, RefreshCw, PlayCircle, PlusCircle, ArrowUp, ArrowDown, Share2, Copy, Check, ExternalLink, Trash2, MoreHorizontal, ArrowUpToLine, ArrowDownToLine, Search, Shuffle } from "lucide-react";
 import type { Player } from "./players";
 import type { Team } from "./teams";
 import {
@@ -210,7 +210,7 @@ export function AuctionPage() {
     
     setPlayers(prevPlayers => {
         const combined = [...prevPlayers, ...playersWithStatus];
-        const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p])).values());
+        const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p.id])).values());
         return uniquePlayers;
     });
 
@@ -581,6 +581,22 @@ const handleRemoveAllPlayers = async () => {
     }
 };
 
+const handleShuffle = () => {
+    setPlayers(currentPlayers => {
+        const shuffled = [...currentPlayers];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setCurrentPlayerIndex(0);
+        toast({
+            title: "Queue Shuffled",
+            description: "The player order has been randomized."
+        });
+        return shuffled;
+    });
+};
+
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   const filteredUpcomingPlayers = useMemo(() => {
     return players.filter(player =>
@@ -779,6 +795,9 @@ const handleRemoveAllPlayers = async () => {
                       <Button variant="destructive" onClick={() => setIsRemoveAllDialogOpen(true)} disabled={players.length === 0}>
                           <Trash2 className="mr-2 h-4 w-4" /> Remove All
                       </Button>
+                      <Button variant="outline" onClick={handleShuffle} disabled={players.length < 2}>
+                        <Shuffle className="mr-2 h-4 w-4" /> Shuffle
+                      </Button>
                       <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
                           <PlusCircle className="mr-2 h-4 w-4" /> Add Player
                       </Button>
@@ -931,3 +950,5 @@ const handleRemoveAllPlayers = async () => {
     </>
   );
 }
+
+    
