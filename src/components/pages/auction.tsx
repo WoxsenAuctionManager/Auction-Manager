@@ -582,15 +582,13 @@ const handleRemoveAllPlayers = async () => {
 };
 
 const handleShuffle = () => {
-    setPlayers(currentPlayers => {
-        const shuffled = [...currentPlayers];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        setCurrentPlayerIndex(0);
-        return shuffled;
-    });
+    const shuffled = [...players];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    setPlayers(shuffled);
+    setCurrentPlayerIndex(0);
 
     toast({
         title: "Queue Shuffled",
@@ -794,15 +792,26 @@ const handleShuffle = () => {
               <div className="flex flex-row items-center justify-between">
                   <CardTitle>Next up Ahead</CardTitle>
                   <div className="flex gap-2">
-                      <Button variant="destructive" onClick={() => setIsRemoveAllDialogOpen(true)} disabled={players.length === 0}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Remove All
-                      </Button>
-                      <Button variant="outline" onClick={handleShuffle} disabled={players.length < 2}>
-                        <Shuffle className="mr-2 h-4 w-4" /> Shuffle
-                      </Button>
                       <Button onClick={() => setIsAddPlayersDialogOpen(true)}>
                           <PlusCircle className="mr-2 h-4 w-4" /> Add Player
                       </Button>
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={handleShuffle} disabled={players.length < 2}>
+                                  <Shuffle className="mr-2 h-4 w-4" />
+                                  Shuffle
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setIsRemoveAllDialogOpen(true)} disabled={players.length === 0} className="text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Remove All
+                              </DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
                   </div>
               </div>
               <div className="relative">
