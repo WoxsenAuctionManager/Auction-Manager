@@ -590,11 +590,12 @@ const handleShuffle = () => {
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         setCurrentPlayerIndex(0);
-        toast({
-            title: "Queue Shuffled",
-            description: "The player order has been randomized."
-        });
         return shuffled;
+    });
+
+    toast({
+        title: "Queue Shuffled",
+        description: "The player order has been randomized."
     });
 };
 
