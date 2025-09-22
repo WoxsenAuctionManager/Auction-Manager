@@ -39,6 +39,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { convertGoogleDriveUrl } from "@/lib/utils";
 import { useAuction } from "@/context/auction-context";
+import { PlayerProfileDialog } from "../player-profile-dialog";
 
 interface RosterPlayer extends Player {
   price?: number;
@@ -58,6 +59,7 @@ export function TeamRosterPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [initialPurse, setInitialPurse] = useState<number>(0);
   const [squadSize, setSquadSize] = useState<number>(0);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const { user } = useAuth();
   const { selectedAuction } = useAuctionSelection();
@@ -267,7 +269,7 @@ export function TeamRosterPage() {
                 <TableBody>
                   {team.roster.length > 0 ? (
                     team.roster.map((player, index) => (
-                      <TableRow key={player.id}>
+                      <TableRow key={player.id} onClick={() => setSelectedPlayer(player)} className="cursor-pointer">
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>
                           <Avatar>
@@ -314,6 +316,12 @@ export function TeamRosterPage() {
         initialPurse={initialPurse}
         initialSquadSize={squadSize}
         onSettingsSaved={handleSettingsSaved}
+      />
+      
+      <PlayerProfileDialog
+        player={selectedPlayer}
+        open={!!selectedPlayer}
+        onOpenChange={() => setSelectedPlayer(null)}
       />
     </>
   );
