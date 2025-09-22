@@ -582,13 +582,15 @@ const handleRemoveAllPlayers = async () => {
 };
 
 const handleShuffle = () => {
-    const shuffled = [...players];
-    for (let i = shuffled.length - 1; i > 0; i--) {
+    setPlayers(currentPlayers => {
+      const shuffled = [...currentPlayers];
+      for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    setPlayers(shuffled);
-    setCurrentPlayerIndex(0);
+      }
+      setCurrentPlayerIndex(0);
+      return shuffled;
+    });
 
     toast({
         title: "Queue Shuffled",
@@ -600,7 +602,7 @@ const handleShuffle = () => {
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   const filteredUpcomingPlayers = useMemo(() => {
     return players.filter(player =>
-      player.name.toLowerCase().includes(searchTerm.toLowerCase())
+      player.name && player.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [players, searchTerm]);
   
@@ -961,3 +963,4 @@ const handleShuffle = () => {
     </>
   );
 }
+
