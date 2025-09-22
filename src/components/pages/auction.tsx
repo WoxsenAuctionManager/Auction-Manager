@@ -207,10 +207,10 @@ export function AuctionPage() {
 
   const handlePlayersAddedToAuction = (newPlayers: Player[]) => {
     const playersWithStatus = newPlayers.map(p => ({ ...p }));
-    
+  
     setPlayers(prevPlayers => {
         const combined = [...prevPlayers, ...playersWithStatus];
-        const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p.id])).values());
+        const uniquePlayers = Array.from(new Map(combined.map(p => [p.id, p])).values());
         return uniquePlayers;
     });
 
@@ -591,10 +591,9 @@ const handleShuffle = () => {
       setCurrentPlayerIndex(0);
       return shuffled;
     });
-
     toast({
-        title: "Queue Shuffled",
-        description: "The player order has been randomized."
+      title: "Queue Shuffled",
+      description: "The player order has been randomized."
     });
 };
 
@@ -602,7 +601,7 @@ const handleShuffle = () => {
   const currentPlayer = useMemo(() => players[currentPlayerIndex], [players, currentPlayerIndex]);
   const filteredUpcomingPlayers = useMemo(() => {
     return players.filter(player =>
-      player.name && player.name.toLowerCase().includes(searchTerm.toLowerCase())
+      player && player.name && player.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [players, searchTerm]);
   
@@ -963,4 +962,3 @@ const handleShuffle = () => {
     </>
   );
 }
-
