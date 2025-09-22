@@ -162,7 +162,7 @@ export function TeamRosterPage() {
       yPos += 7;
 
       doc.setFontSize(10);
-      doc.text(`Amount Remaining: ₹${team.remainingPurse.toLocaleString('en-IN')}`, 14, yPos);
+      doc.text(`Amount Remaining: Rs. ${team.remainingPurse.toLocaleString('en-IN')}`, 14, yPos);
       yPos += 10;
 
       autoTable(doc, {
@@ -172,7 +172,7 @@ export function TeamRosterPage() {
           index + 1,
           player.name,
           player.player_position,
-          `₹${player.price?.toLocaleString('en-IN') || 'N/A'}`
+          `Rs. ${player.price?.toLocaleString('en-IN') || 'N/A'}`
         ]),
         theme: 'striped',
         headStyles: { fillColor: [38, 115, 101] },
